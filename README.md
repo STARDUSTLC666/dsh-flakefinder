@@ -4,6 +4,10 @@
 
 DeepSeek Harness 测试稳定性插件：重复运行测试并识别 flaky 用例，历史留档、隔离清单、写操作审批门。零运行时依赖。
 
+![license](https://img.shields.io/npm/l/dsh-flakefinder) ![stars](https://img.shields.io/github/stars/STARDUSTLC666/dsh-flakefinder?style=social)
+
+[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
+
 ## 工具
 
 | 工具 | 作用 | 写操作 |

@@ -4,6 +4,10 @@
 
 A DeepSeek Harness plugin for test stability: run tests repeatedly, classify flaky cases, keep history, maintain a quarantine manifest, and gate writes with approvals. Zero runtime dependencies.
 
+![license](https://img.shields.io/npm/l/dsh-flakefinder) ![stars](https://img.shields.io/github/stars/STARDUSTLC666/dsh-flakefinder?style=social)
+
+[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
+
 ## Tools
 
 | Tool | Purpose | Write |
