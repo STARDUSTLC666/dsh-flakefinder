@@ -1,0 +1,19 @@
+# dsh-flakefinder 组合包补丁：把测试稳定性插件行插入 profile。
+# 用户 profile 的 cordis.patch.yml 可按 id 覆盖本行整个 config。
+#
+# 示例：
+#   - id: flakefinder
+#     name: 'dsh-flakefinder'
+#     config:
+#       defaultRuns: 5          # flaky_detect 默认重复次数（3-20）
+#       timeoutMs: 120000       # 单次测试运行超时（毫秒）
+#       writeApproval: true     # quarantine/clear 是否走审批门（默认 true）
+#       dataDir: ''             # 历史存储目录（默认 DSH_HOME/.dsh-flakefinder）
+#       quarantineFile: ''      # 隔离清单（默认项目根 .flakefinder.json）
+#
+- insert:
+    - id: flakefinder
+      name: 'dsh-flakefinder'
+      config:
+        defaultRuns: 5
+        writeApproval: true
