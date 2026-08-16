@@ -7,7 +7,7 @@ test('默认配置落在 DSH_HOME 下', () => {
   assert.equal(cfg.defaultRuns, 5)
   assert.equal(cfg.maxRuns, 20)
   assert.equal(cfg.writeApproval, true)
-  assert.equal(cfg.quarantineFile, 'C:\\work\\.flakefinder.json')
+  assert.equal(cfg.quarantineFile.replace(/\\/g, '/'), 'C:/work/.flakefinder.json')
   assert.match(cfg.dataDir.replace(/\\/g, '/'), /dsh-flakefinder$/)
 })
 
