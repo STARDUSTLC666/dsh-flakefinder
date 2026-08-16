@@ -60,6 +60,16 @@ test('解析 node:test 的 TAP 输出', () => {
   assert.equal(run.tests[0].name, 'alpha')
 })
 
+test('TAP SKIP 指令归类为跳过', () => {
+  const run = parseTapReport('TAP version 13\nok 1 - alpha # SKIP slow\nok 2 - beta\n1..2\n')
+  assert.equal(run.success, true)
+  assert.equal(run.passed, 1)
+  assert.equal(run.failed, 0)
+  assert.equal(run.skipped, 1)
+  assert.equal(run.tests[0].name, 'alpha')
+  assert.equal(run.tests[0].status, 'skipped')
+})
+
 test('空 TAP 不算成功', () => {
   const run = parseTapReport('')
   assert.equal(run.success, false)

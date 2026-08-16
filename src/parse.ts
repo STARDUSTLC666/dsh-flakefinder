@@ -159,23 +159,26 @@ export function parseTapReport(text: string): NormalizedRun {
     if (match === null) continue
     const failed = match[1] === 'not ok'
     index += 1
-    const name = (match[3] ?? '(unnamed)').replace(/\s+#.*$/, '')
+    const rawName = match[3] ?? '(unnamed)'
+    const skipped = /#\s*SKIP\b/i.test(rawName)
+    const name = rawName.replace(/\s+#.*$/, '')
     tests.push({
       id: 'node:' + String(index) + ' > ' + name,
       file: '(node:test)',
       name,
-      status: failed ? 'failed' : 'passed',
+      status: skipped ? 'skipped' : failed ? 'failed' : 'passed',
       durationMs: 0,
     })
   }
   const failed = tests.filter(item => item.status === 'failed').length
+  const skipped = tests.filter(item => item.status === 'skipped').length
   return {
     framework: 'node',
     success: failed === 0 && tests.length > 0,
     total: tests.length,
-    passed: tests.length - failed,
+    passed: tests.length - failed - skipped,
     failed,
-    skipped: 0,
+    skipped,
     tests,
   }
 }
