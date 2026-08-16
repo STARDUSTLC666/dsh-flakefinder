@@ -30,6 +30,13 @@ test('buildPlan 在 setup.cfg 配置下自动选择 pytest', async () => {
   await fs.rm(dir, { recursive: true, force: true })
 })
 
+test('parseJunitReport 解码 XML 实体', () => {
+  const xml = '<testsuite><testcase classname="tests.test_x&#x26;y" name="test_ok &amp; fine" time="0.1"/></testsuite>'
+  const run = parseJunitReport(xml)
+  assert.equal(run.tests[0].file, 'tests.test_x&y')
+  assert.equal(run.tests[0].name, 'test_ok & fine')
+})
+
 test('parseJunitReport 解析通过/失败/跳过', () => {
   const xml = '<?xml version="1.0"?><testsuite name="pytest" errors="0" failures="1" skipped="1" tests="3"><testcase classname="tests.test_x" name="test_ok" time="0.1"/><testcase classname="tests.test_x" name="test_bad" time="0.2"><failure message="boom"/></testcase><testcase classname="tests.test_x" name="test_skip" time="0"><skipped type="pytest.skip" message="skip"/></testcase></testsuite>'
   const run = parseJunitReport(xml)

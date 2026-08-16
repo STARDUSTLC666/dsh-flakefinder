@@ -107,8 +107,22 @@ function reportedCount(reported: unknown, fallback: number): number {
 }
 
 function attrOf(tag: string, name: string): string {
-  const m = new RegExp(name + '="([^"]*)"').exec(tag)
+  const m = new RegExp('(?:^|\\s)' + name + '="([^"]*)"').exec(tag)
   return m === null ? '' : m[1]!
+}
+
+/** 解码 XML 属性里的实体与数字字符引用。 */
+function decodeXmlEntities(text: string): string {
+  const named: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }
+  return text.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (raw, body: string) => {
+    const key = body.toLowerCase()
+    if (key.startsWith('#')) {
+      const hex = key.startsWith('#x')
+      const code = parseInt(hex ? key.slice(2) : key.slice(1), hex ? 16 : 10)
+      return Number.isFinite(code) ? String.fromCodePoint(code) : raw
+    }
+    return named[key] ?? raw
+  })
 }
 
 /** 解析 pytest 的 JUnit XML 报告。 */
@@ -119,15 +133,15 @@ export function parseJunitReport(text: string): NormalizedRun {
   for (const m of text.matchAll(block)) {
     const tag = m[1]!
     const body = m[2]!
-    const classname = attrOf(tag, 'classname') || '(pytest)'
-    const name = attrOf(tag, 'name') || '(unnamed)'
+    const classname = decodeXmlEntities(attrOf(tag, 'classname')) || '(pytest)'
+    const name = decodeXmlEntities(attrOf(tag, 'name')) || '(unnamed)'
     const status: TestStatus = /<(?:failure|error)\b/.test(body) ? 'failed' : /<skipped\b/.test(body) ? 'skipped' : 'passed'
     tests.push({ id: classname + ' > ' + name, file: classname, name, status, durationMs: Math.max(0, Number(attrOf(tag, 'time')) || 0) })
   }
   for (const m of text.matchAll(single)) {
     const tag = m[1]!
-    const classname = attrOf(tag, 'classname') || '(pytest)'
-    const name = attrOf(tag, 'name') || '(unnamed)'
+    const classname = decodeXmlEntities(attrOf(tag, 'classname')) || '(pytest)'
+    const name = decodeXmlEntities(attrOf(tag, 'name')) || '(unnamed)'
     tests.push({ id: classname + ' > ' + name, file: classname, name, status: 'passed', durationMs: Math.max(0, Number(attrOf(tag, 'time')) || 0) })
   }
   const failed = tests.filter(item => item.status === 'failed').length
