@@ -18,7 +18,7 @@ A DeepSeek Harness plugin for test stability: run tests repeatedly, classify fla
 | `flaky_quarantine` | Write flaky cases to `.flakefinder.json` | yes (approval) |
 | `flaky_clear` | Remove recovered cases from the manifest | yes (approval) |
 
-Frameworks: vitest / jest / pytest / node:test, auto-detected in that order.
+Frameworks: vitest / jest / pytest (setup.cfg / pyproject / pytest.ini / tox.ini) / node:test, auto-detected in that order. JUnit XML entities and TAP SKIP directives are parsed.
 
 ## Install
 

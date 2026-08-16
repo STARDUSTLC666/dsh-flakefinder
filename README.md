@@ -22,8 +22,8 @@ DeepSeek Harness 测试稳定性插件：支持 vitest / jest / pytest / node:te
 
 - vitest：读取 `node_modules/vitest/vitest.mjs`，使用 JSON reporter
 - jest：读取 `node_modules/jest/bin/jest.js`，使用 `--json --outputFile`
-- pytest：`python -m pytest --junitxml`，解析 JUnit XML（内置能力，无需 pytest 插件）
-- node:test：`node --test --test-reporter=tap`，解析 TAP
+- pytest：`python -m pytest --junitxml`，解析 JUnit XML（支持 setup.cfg / pyproject / pytest.ini / tox.ini 探测与 XML 实体解码）
+- node:test：`node --test --test-reporter=tap`，解析 TAP（含 SKIP 指令归类）
 - `framework: auto` 按 vitest → jest → pytest → node:test 自动探测
 
 ## 安装
@@ -87,7 +87,7 @@ Agent：
 
 - Node >= 22.13，TypeScript，零运行时依赖
 - 测试进程走 DSH 官方 subprocess 服务，argv 数组、无 shell
-- 全量单测 37+：解析、判定、存储、审批门、pytest 计划、subprocess 超时、注册与 manifest
+- 全量单测 40+：解析、判定、存储、审批门、pytest 计划、subprocess 超时、注册与 manifest
 - `pnpm test`：构建 + `node --test`
 
 ## 发布门禁
