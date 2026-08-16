@@ -87,7 +87,7 @@ Agent：
 
 - Node >= 22.13，TypeScript，零运行时依赖
 - 测试进程走 DSH 官方 subprocess 服务，argv 数组、无 shell
-- 全量单测 35+：解析、判定、存储、审批门、pytest 计划、注册与 manifest
+- 全量单测 37+：解析、判定、存储、审批门、pytest 计划、subprocess 超时、注册与 manifest
 - `pnpm test`：构建 + `node --test`
 
 ## 发布门禁

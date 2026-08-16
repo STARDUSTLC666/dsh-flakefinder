@@ -1,6 +1,6 @@
 {
   "name": "dsh-flakefinder",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "DSH 测试稳定性插件：flaky_detect/history/quarantine/clear/report 五工具，支持 vitest/jest/pytest/node:test，重复运行测试并识别不稳定用例，JSON 历史与隔离清单，零运行时依赖。",
   "type": "module",
   "main": "lib/index.js",
