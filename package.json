@@ -37,7 +37,8 @@
     "plugin",
     "testing",
     "flaky-test",
-    "quality"
+    "quality",
+    "dsh-plugin"
   ],
   "license": "MIT",
   "engines": {
