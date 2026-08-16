@@ -129,10 +129,10 @@ export function buildFlakeTools(
 ): FlakeToolDefinition[] {
   const detect: FlakeToolDefinition = {
     name: 'flaky_detect',
-    description: '重复运行测试多次并判定稳定性：stable-pass（全过）/ stable-fail（全挂）/ flaky（时好时坏）。支持 vitest / jest / node:test，自动探测本地框架。结果写入历史供 flaky_report 分析。',
+    description: '重复运行测试多次并判定稳定性：stable-pass（全过）/ stable-fail（全挂）/ flaky（时好时坏）。支持 vitest / jest / pytest / node:test，自动探测本地框架。结果写入历史供 flaky_report 分析。',
     parameters: compileParameters({
       target: { type: 'string', required: true, description: '测试文件、目录或 glob（相对当前工作区）。不能以 - 开头。' },
-      framework: { type: 'string', description: 'auto（默认，自动探测 vitest→jest→node:test）/ vitest / jest / node。' },
+      framework: { type: 'string', description: 'auto（默认，自动探测 vitest→jest→pytest→node:test）/ vitest / jest / pytest / node。' },
       runs: { type: 'integer', description: '重复次数，默认取配置 defaultRuns。' },
     }),
     output: {
@@ -148,7 +148,7 @@ export function buildFlakeTools(
       const target = assertTarget(requiredString(args, 'target', '测试目标'))
       const requested: Framework = readFramework(args.framework)
       const runs = resolveRuns(args.runs, cfg)
-      const plans = Array.from({ length: runs }, (_, index) => buildPlan(process.cwd(), target, requested, index))
+      const plans = Array.from({ length: runs }, (_, index) => buildPlan(process.cwd(), target, requested, index, cfg.pythonPath))
       const framework = plans[0]?.framework ?? 'node'
       const executed: FlakeRun[] = []
       for (let index = 0; index < plans.length; index += 1) {

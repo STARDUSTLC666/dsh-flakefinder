@@ -6,7 +6,7 @@
 
 import fs from 'node:fs/promises'
 import type { TestPlan } from './args.js'
-import { parseJsonReport, parseTapReport, type NormalizedRun } from './parse.js'
+import { parseJsonReport, parseJunitReport, parseTapReport, type NormalizedRun } from './parse.js'
 
 export interface RunResult {
   exitCode: number | null
@@ -118,14 +118,14 @@ export async function executePlan(runner: ProcessRunner, plan: TestPlan, index: 
       durationMs,
       exitCode: result.exitCode,
       stderr: result.stderr,
-      error: plan.framework + ' 没有写出 JSON 报告（' + fileError + '）。进程退出码：' + String(result.exitCode ?? 'null') + '；stderr：' + stderrTail(result.stderr),
+      error: plan.framework + ' 没有写出报告文件（' + fileError + '）。进程退出码：' + String(result.exitCode ?? 'null') + '；stderr：' + stderrTail(result.stderr),
     }
   }
 
   try {
     return {
       index,
-      report: parseJsonReport(fileText, plan.framework),
+      report: plan.reportKind === 'junit' ? parseJunitReport(fileText) : parseJsonReport(fileText, plan.framework),
       durationMs,
       exitCode: result.exitCode,
       stderr: result.stderr,

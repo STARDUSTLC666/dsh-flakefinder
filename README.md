@@ -2,7 +2,7 @@
 
 > 让 agent 分清「代码坏了」还是「测试在抽风」。
 
-DeepSeek Harness 测试稳定性插件：重复运行测试并识别 flaky 用例，历史留档、隔离清单、写操作审批门。零运行时依赖。
+DeepSeek Harness 测试稳定性插件：支持 vitest / jest / pytest / node:test，重复运行测试并识别 flaky 用例，历史留档、隔离清单、写操作审批门。零运行时依赖。
 
 ![license](https://img.shields.io/npm/l/dsh-flakefinder) ![stars](https://img.shields.io/github/stars/STARDUSTLC666/dsh-flakefinder?style=social)
 
@@ -22,8 +22,9 @@ DeepSeek Harness 测试稳定性插件：重复运行测试并识别 flaky 用�
 
 - vitest：读取 `node_modules/vitest/vitest.mjs`，使用 JSON reporter
 - jest：读取 `node_modules/jest/bin/jest.js`，使用 `--json --outputFile`
+- pytest：`python -m pytest --junitxml`，解析 JUnit XML（内置能力，无需 pytest 插件）
 - node:test：`node --test --test-reporter=tap`，解析 TAP
-- `framework: auto` 按 vitest → jest → node:test 自动探测
+- `framework: auto` 按 vitest → jest → pytest → node:test 自动探测
 
 ## 安装
 
@@ -62,6 +63,7 @@ Agent：
 | `writeApproval` | `true` | 隔离清单写操作是否走审批门 |
 | `dataDir` | `DSH_HOME/.dsh-flakefinder` | 历史存储目录 |
 | `quarantineFile` | `<cwd>/.flakefinder.json` | 隔离清单路径 |
+| `pythonPath` | `DSH_FLAKEFINDER_PYTHON` 或 `python`/`python3` | pytest 使用的 Python 解释器 |
 
 ## 隔离清单格式
 
@@ -85,7 +87,7 @@ Agent：
 
 - Node >= 22.13，TypeScript，零运行时依赖
 - 测试进程走 DSH 官方 subprocess 服务，argv 数组、无 shell
-- 全量单测 30+：解析、判定、存储、审批门、注册与 manifest
+- 全量单测 35+：解析、判定、存储、审批门、pytest 计划、注册与 manifest
 - `pnpm test`：构建 + `node --test`
 
 ## 发布门禁

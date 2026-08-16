@@ -11,8 +11,8 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { assertTarget } from './config.js'
 
-export type Framework = 'auto' | 'vitest' | 'jest' | 'node'
-export type ReportKind = 'json' | 'tap'
+export type Framework = 'auto' | 'vitest' | 'jest' | 'pytest' | 'node'
+export type ReportKind = 'json' | 'tap' | 'junit'
 
 export interface TestPlan {
   framework: Exclude<Framework, 'auto'>
@@ -25,13 +25,24 @@ export interface TestPlan {
 /** 解析 framework 参数；非法值抛中文错误。 */
 export function readFramework(raw: unknown): Framework {
   if (raw === undefined || raw === null) return 'auto'
-  if (raw === 'auto' || raw === 'vitest' || raw === 'jest' || raw === 'node') return raw
-  throw new Error('framework 只支持 auto / vitest / jest / node，收到：' + String(raw))
+  if (raw === 'auto' || raw === 'vitest' || raw === 'jest' || raw === 'pytest' || raw === 'node') return raw
+  throw new Error('framework 只支持 auto / vitest / jest / pytest / node，收到：' + String(raw))
 }
 
 function localEntry(cwd: string, ...parts: string[]): string | null {
   const full = path.join(cwd, ...parts)
   return fs.existsSync(full) ? full : null
+}
+
+function hasPytestConfig(cwd: string): boolean {
+  if (fs.existsSync(path.join(cwd, 'pytest.ini')) || fs.existsSync(path.join(cwd, 'tox.ini'))) return true
+  const pyproject = path.join(cwd, 'pyproject.toml')
+  if (!fs.existsSync(pyproject)) return false
+  try {
+    return /\[tool\.pytest(\.ini_options)?\]/.test(fs.readFileSync(pyproject, 'utf8'))
+  } catch {
+    return false
+  }
 }
 
 /** 在 cwd 里探测本地框架 CLI 入口；显式指定时缺失会给出中文指引。 */
@@ -49,11 +60,12 @@ export function detectFramework(cwd: string, requested: Framework): Exclude<Fram
   }
   if (vitest !== null) return 'vitest'
   if (jest !== null) return 'jest'
+  if (hasPytestConfig(cwd)) return 'pytest'
   return 'node'
 }
 
 /** 构建一次测试运行的执行计划。runIndex 仅用于给临时报告文件命名。 */
-export function buildPlan(cwd: string, target: string, requested: Framework, runIndex: number): TestPlan {
+export function buildPlan(cwd: string, target: string, requested: Framework, runIndex: number, pythonPath = 'python'): TestPlan {
   const safeTarget = assertTarget(target)
   const framework = detectFramework(cwd, requested)
   const token = crypto.randomBytes(6).toString('hex')
@@ -81,6 +93,17 @@ export function buildPlan(cwd: string, target: string, requested: Framework, run
       reportPath,
       argv: [process.execPath, entry, '--runInBand', '--json', '--outputFile', reportPath, safeTarget],
       label: 'jest run ' + safeTarget,
+    }
+  }
+
+  if (framework === 'pytest') {
+    const reportPath = path.join(os.tmpdir(), 'dsh-flakefinder-pytest-' + process.pid + '-' + String(runIndex) + '-' + token + '.xml')
+    return {
+      framework,
+      reportKind: 'junit',
+      reportPath,
+      argv: [pythonPath, '-m', 'pytest', safeTarget, '-q', '--junitxml=' + reportPath],
+      label: 'pytest ' + safeTarget,
     }
   }
 

@@ -10,6 +10,7 @@
 #       writeApproval: true     # quarantine/clear 是否走审批门（默认 true）
 #       dataDir: ''             # 历史存储目录（默认 DSH_HOME/.dsh-flakefinder）
 #       quarantineFile: ''      # 隔离清单（默认项目根 .flakefinder.json）
+      pythonPath: ''          # pytest 使用的 Python 解释器（默认 python/python3）
 #
 - insert:
     - id: flakefinder

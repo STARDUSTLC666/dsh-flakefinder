@@ -106,6 +106,35 @@ function reportedCount(reported: unknown, fallback: number): number {
   return fallback
 }
 
+function attrOf(tag: string, name: string): string {
+  const m = new RegExp(name + '="([^"]*)"').exec(tag)
+  return m === null ? '' : m[1]!
+}
+
+/** 解析 pytest 的 JUnit XML 报告。 */
+export function parseJunitReport(text: string): NormalizedRun {
+  const tests: NormalizedTest[] = []
+  const block = /<testcase\b([^>]*)>([\s\S]*?)<\/testcase\s*>/gi
+  const single = /<testcase\b([^>]*)\/>/gi
+  for (const m of text.matchAll(block)) {
+    const tag = m[1]!
+    const body = m[2]!
+    const classname = attrOf(tag, 'classname') || '(pytest)'
+    const name = attrOf(tag, 'name') || '(unnamed)'
+    const status: TestStatus = /<(?:failure|error)\b/.test(body) ? 'failed' : /<skipped\b/.test(body) ? 'skipped' : 'passed'
+    tests.push({ id: classname + ' > ' + name, file: classname, name, status, durationMs: Math.max(0, Number(attrOf(tag, 'time')) || 0) })
+  }
+  for (const m of text.matchAll(single)) {
+    const tag = m[1]!
+    const classname = attrOf(tag, 'classname') || '(pytest)'
+    const name = attrOf(tag, 'name') || '(unnamed)'
+    tests.push({ id: classname + ' > ' + name, file: classname, name, status: 'passed', durationMs: Math.max(0, Number(attrOf(tag, 'time')) || 0) })
+  }
+  const failed = tests.filter(item => item.status === 'failed').length
+  const skipped = tests.filter(item => item.status === 'skipped').length
+  return { framework: 'pytest', success: failed === 0, total: tests.length, passed: tests.length - failed - skipped, failed, skipped, tests }
+}
+
 /** 解析 node:test 的 TAP 输出；子测试行忽略，只保留顶层用例。 */
 export function parseTapReport(text: string): NormalizedRun {
   const tests: NormalizedTest[] = []

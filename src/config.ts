@@ -23,6 +23,8 @@ export interface FlakeConfig {
   dataDir?: string
   /** 项目隔离清单路径（默认 cwd/.flakefinder.json）。 */
   quarantineFile?: string
+  /** Python 解释器命令（pytest 框架使用，默认 DSH_FLAKEFINDER_PYTHON 或 python/python3）。 */
+  pythonPath?: string
 }
 
 /** 解析后的配置。 */
@@ -34,6 +36,7 @@ export interface ResolvedFlakeConfig {
   writeApproval: boolean
   dataDir: string
   quarantineFile: string
+  pythonPath: string
 }
 
 const MIN_RUNS = 3
@@ -85,7 +88,11 @@ export function resolveConfig(config: FlakeConfig | undefined | null, cwd = proc
     ? path.resolve(cwd, cfg.quarantineFile.trim())
     : path.join(cwd, '.flakefinder.json')
 
-  return { defaultRuns, maxRuns, timeoutMs, graceMs, writeApproval, dataDir, quarantineFile }
+  const pythonPath = typeof cfg.pythonPath === 'string' && cfg.pythonPath.trim() !== ''
+    ? cfg.pythonPath.trim()
+    : (process.env.DSH_FLAKEFINDER_PYTHON?.trim() || (process.platform === 'win32' ? 'python' : 'python3'))
+
+  return { defaultRuns, maxRuns, timeoutMs, graceMs, writeApproval, dataDir, quarantineFile, pythonPath }
 }
 
 function readRuns(label: string, value: unknown, lo: number, hi: number): number {
