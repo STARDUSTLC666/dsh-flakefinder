@@ -37,9 +37,17 @@ function localEntry(cwd: string, ...parts: string[]): string | null {
 function hasPytestConfig(cwd: string): boolean {
   if (fs.existsSync(path.join(cwd, 'pytest.ini')) || fs.existsSync(path.join(cwd, 'tox.ini'))) return true
   const pyproject = path.join(cwd, 'pyproject.toml')
-  if (!fs.existsSync(pyproject)) return false
+  if (fs.existsSync(pyproject)) {
+    try {
+      if (/\[tool\.pytest(\.ini_options)?\]/.test(fs.readFileSync(pyproject, 'utf8'))) return true
+    } catch {
+      // 读不了就当没有配置，继续探测 setup.cfg。
+    }
+  }
+  const setupCfg = path.join(cwd, 'setup.cfg')
+  if (!fs.existsSync(setupCfg)) return false
   try {
-    return /\[tool\.pytest(\.ini_options)?\]/.test(fs.readFileSync(pyproject, 'utf8'))
+    return /\[tool:pytest\]/.test(fs.readFileSync(setupCfg, 'utf8'))
   } catch {
     return false
   }
