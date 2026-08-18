@@ -14,6 +14,7 @@ import { createStore } from './store.js'
 import { buildFlakeTools, type FlakeToolDefinition } from './tools.js'
 
 /** cordis 服务注入：apply 里要用 ctx.subprocess 与 ctx.tools。 */
+export const name = 'flakefinder'
 export const inject = ['subprocess', 'tools']
 
 /** 插件所需的最小 ctx 面。 */

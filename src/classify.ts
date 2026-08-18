@@ -106,7 +106,9 @@ export function aggregate(runs: Array<{ index: number; report: NormalizedRun | n
 
   let verdict: RunVerdict
   const passRuns = records.filter(run => run.success).length
-  if (tests.every(test => test.verdict === 'skipped')) {
+  if (tests.length === 0) {
+    verdict = 'empty'
+  } else if (tests.every(test => test.verdict === 'skipped')) {
     verdict = 'skipped'
   } else if (passRuns === records.length) {
     verdict = 'stable-pass'
@@ -114,6 +116,25 @@ export function aggregate(runs: Array<{ index: number; report: NormalizedRun | n
     verdict = 'stable-fail'
   } else {
     verdict = 'flaky'
+  }
+
+  // 运行级 flaky 但无具体 flaky 用例：通常是某次运行崩溃（report=null）未产出报告。
+  // 补一条合成记录，避免 flaky 信号丢失（历史写入 verdict=flaky 但 flakyCount=0）。
+  if (verdict === 'flaky' && flakyCount === 0) {
+    const crashRuns = runs.filter(run => run.report === null).length
+    if (crashRuns > 0) {
+      tests.push({
+        id: '(crash)',
+        file: '(crash)',
+        name: '运行崩溃（未产出报告）',
+        passes: 0,
+        failures: crashRuns,
+        skips: 0,
+        failureRate: 100,
+        verdict: 'flaky',
+      })
+      flakyCount += 1
+    }
   }
 
   tests.sort((a, b) => a.id.localeCompare(b.id))
