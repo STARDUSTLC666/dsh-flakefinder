@@ -23,7 +23,7 @@ test('cordis.patch.yml 插入 flakefinder 行', () => {
   assert.match(text, /writeApproval/)
 })
 
-test('lib 已构建且导出五个工具入口', () => {
+test('lib 已构建且导出六个工具入口', () => {
   assert.ok(fs.existsSync(path.join(root, 'lib/index.js')))
   assert.ok(fs.existsSync(path.join(root, 'lib/tools.js')))
 })

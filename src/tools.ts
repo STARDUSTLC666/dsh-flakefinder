@@ -332,7 +332,51 @@ export function buildFlakeTools(
     clear.gate = approvalGate('flaky_clear', '从 .flakefinder.json 隔离清单移除测试用例')
   }
 
-  return [detect, history, quarantine, clear, report]
+  const flakyHealth: FlakeToolDefinition = {
+    name: 'flaky_health',
+    description: 'dsh-flakefinder 自检：验证 Python 解释器与 pytest 是否可用（pytest 框架必需），并汇总默认配置。遇到问题时先运行本工具定位。',
+    parameters: compileParameters({}),
+    output: {
+      schema: { type: 'object', additionalProperties: true },
+      render: (_args, value) => {
+        const rec = asRecord(value)
+        const checks = Array.isArray(rec.checks) ? rec.checks : []
+        const lines = ['dsh-flakefinder 自检' + (rec.ok === true ? '：正常。' : '：发现问题。')]
+        for (const item of checks) {
+          const c = asRecord(item)
+          lines.push('- ' + c.name + '：' + (c.ok === true ? '✅' : '❌ ' + String(c.detail ?? '')))
+        }
+        return [{ type: 'text', text: lines.join('\n') }]
+      },
+    },
+    async execute() {
+      const checks: Array<Record<string, unknown>> = []
+      let ok = true
+      try {
+        const result = await runner.run([cfg.pythonPath, '--version'], { timeoutMs: 15000 })
+        const version = (result.stdout + result.stderr).split(/\r?\n/)[0]?.trim() ?? ''
+        if (result.exitCode === 0) checks.push({ name: 'python', ok: true, detail: version + '（' + cfg.pythonPath + '）' })
+        else { ok = false; checks.push({ name: 'python', ok: false, detail: '退出码 ' + String(result.exitCode) }) }
+      } catch (error) {
+        ok = false
+        checks.push({ name: 'python', ok: false, detail: error instanceof Error ? error.message : String(error) })
+      }
+      try {
+        const result = await runner.run([cfg.pythonPath, '-m', 'pytest', '--version'], { timeoutMs: 20000 })
+        const version = (result.stdout + result.stderr).split(/\r?\n/)[0]?.trim() ?? ''
+        if (result.exitCode === 0) checks.push({ name: 'pytest', ok: true, detail: version })
+        else { ok = false; checks.push({ name: 'pytest', ok: false, detail: '未安装或不可用（pip install pytest）' }) }
+      } catch (error) {
+        ok = false
+        checks.push({ name: 'pytest', ok: false, detail: error instanceof Error ? error.message : String(error) })
+      }
+      checks.push({ name: '默认配置', ok: true, detail: 'defaultRuns=' + cfg.defaultRuns + ', timeoutMs=' + cfg.timeoutMs })
+      return { ok, plugin: 'dsh-flakefinder', checks }
+    },
+    timeoutMs: 40000,
+  }
+
+  return [detect, history, quarantine, clear, report, flakyHealth]
 }
 
 function runsTimeout(cfg: ResolvedFlakeConfig): number {

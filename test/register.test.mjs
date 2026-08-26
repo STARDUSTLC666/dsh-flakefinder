@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { apply } from '../lib/index.js'
 
-test('apply 注册五个工具并按 dispose 清理', () => {
+test('apply 注册六个工具并按 dispose 清理', () => {
   const names = []
   const disposed = []
   const listeners = new Map()
@@ -22,11 +22,11 @@ test('apply 注册五个工具并按 dispose 清理', () => {
     on(event, listener) { listeners.set(event, listener) },
   }
   apply(ctx, { writeApproval: false })
-  assert.deepEqual(names, ['flaky_detect', 'flaky_history', 'flaky_quarantine', 'flaky_clear', 'flaky_report'])
+  assert.deepEqual(names, ['flaky_detect', 'flaky_history', 'flaky_quarantine', 'flaky_clear', 'flaky_report', 'flaky_health'])
   const dispose = listeners.get('dispose')
   assert.equal(typeof dispose, 'function')
   dispose()
-  assert.equal(disposed.length, 5)
+  assert.equal(disposed.length, 6)
 })
 
 test('配置非法时退回默认配置并告警', () => {
@@ -38,5 +38,5 @@ test('配置非法时退回默认配置并告警', () => {
     on() {},
   }
   apply(ctx, { timeoutMs: -1 })
-  assert.equal(names.length, 5)
+  assert.equal(names.length, 6)
 })
