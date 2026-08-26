@@ -26,6 +26,10 @@ DeepSeek Harness 测试稳定性插件：支持 vitest / jest / pytest / node:te
 - node:test：`node --test --test-reporter=tap`，解析 TAP（含 SKIP 指令归类）
 - `framework: auto` 按 vitest → jest → pytest → node:test 自动探测
 
+## 兼容性
+
+在 `@deepseek-ai/dsh@0.1.1-rc.2` 上验证（2026-08-26）。遵循 cordis 组合包补丁模型（`cordis.patch.yml` + `dsh.bundle.patch`），运行时不 import 任何 `@deepseek-ai/*` 内部模块。
+
 ## 安装
 
 ```bash
@@ -41,6 +45,15 @@ dsh plugin --profile web add dsh-flakefinder
     defaultRuns: 5
     writeApproval: true
 ```
+
+## 卸载
+
+```bash
+dsh plugin --profile web remove dsh-flakefinder
+```
+
+卸载后重启 Web 服务。如需彻底清理，可再手动删除自己 profile `cordis.patch.yml` 中覆盖的插件行。
+
 
 ## 使用示例
 

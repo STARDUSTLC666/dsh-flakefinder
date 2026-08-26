@@ -20,11 +20,24 @@ A DeepSeek Harness plugin for test stability: run tests repeatedly, classify fla
 
 Frameworks: vitest / jest / pytest (setup.cfg / pyproject / pytest.ini / tox.ini) / node:test, auto-detected in that order. JUnit XML entities and TAP SKIP directives are parsed.
 
+## Compatibility
+
+Verified against `@deepseek-ai/dsh@0.1.1-rc.2` on 2026-08-26. Built for the cordis patch-bundle plugin model (`cordis.patch.yml` + `dsh.bundle.patch`). No runtime imports of `@deepseek-ai/*` internals.
+
 ## Install
 
 ```bash
 dsh plugin --profile web add dsh-flakefinder
 ```
+
+## Uninstall
+
+```bash
+dsh plugin --profile web remove dsh-flakefinder
+```
+
+Then restart the web service. To clean up fully, also remove the plugin entry from your profile `cordis.patch.yml` if you overrode it.
+
 
 ## Example
 
