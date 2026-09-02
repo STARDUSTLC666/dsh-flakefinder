@@ -24,7 +24,6 @@ export interface FlakeToolDefinition {
         render(args: unknown, value: unknown): ContentBlock[];
     };
     execute(args: unknown, exec: unknown): Promise<unknown>;
-    gate?(exec: unknown, next: () => Promise<unknown>): Promise<unknown>;
     timeoutMs?: number;
 }
 /** 构建五个工具定义。 */

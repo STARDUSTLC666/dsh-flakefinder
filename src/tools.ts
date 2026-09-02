@@ -28,7 +28,6 @@ export interface FlakeToolDefinition {
     render(args: unknown, value: unknown): ContentBlock[]
   }
   execute(args: unknown, exec: unknown): Promise<unknown>
-  gate?(exec: unknown, next: () => Promise<unknown>): Promise<unknown>
   timeoutMs?: number
 }
 
@@ -327,11 +326,6 @@ export function buildFlakeTools(
     timeoutMs: 10000,
   }
 
-  if (cfg.writeApproval) {
-    quarantine.gate = approvalGate('flaky_quarantine', '把测试用例写入 .flakefinder.json 隔离清单')
-    clear.gate = approvalGate('flaky_clear', '从 .flakefinder.json 隔离清单移除测试用例')
-  }
-
   const flakyHealth: FlakeToolDefinition = {
     name: 'flaky_health',
     description: 'dsh-flakefinder 自检：验证 Python 解释器与 pytest 是否可用（pytest 框架必需），并汇总默认配置。遇到问题时先运行本工具定位。',
@@ -381,30 +375,4 @@ export function buildFlakeTools(
 
 function runsTimeout(cfg: ResolvedFlakeConfig): number {
   return Math.min(10 * 60 * 1000, cfg.maxRuns * cfg.timeoutMs + 15000)
-}
-
-interface FlakeApproval {
-  request(options: { agent?: unknown; toolName?: unknown; callId?: unknown; reason: string; signal?: unknown }): Promise<'allowed-once' | 'cancelled' | 'unavailable' | string>
-}
-
-/** 写操作审批门：复用 dsh-docker 的中文拒绝语义。 */
-function approvalGate(toolName: string, action: string) {
-  return async (exec: unknown, next: () => Promise<unknown>) => {
-    const record = (typeof exec === 'object' && exec !== null ? exec : {}) as Record<string, unknown>
-    const approval = record.approval as FlakeApproval | undefined
-    if (approval === undefined) {
-      return { kind: 'deny', reason: toolName + ' 需要确认，但当前环境没有审批通道（如 headless）。如确定安全，可在配置中设置 writeApproval: false。' }
-    }
-    const outcome = await approval.request({
-      agent: record.agent,
-      toolName: record.toolName,
-      callId: record.callId,
-      reason: action,
-      signal: record.signal,
-    })
-    if (outcome === 'allowed-once') return next()
-    if (outcome === 'cancelled') return { kind: 'deny', reason: action + ' 被取消，未执行。' }
-    if (outcome === 'unavailable') return { kind: 'deny', reason: action + ' 不可用（没有可用的审批界面），未执行。' }
-    return { kind: 'deny', reason: action + ' 未获批准：要么你拒绝了，要么当前会话处于 Full Access。若确需直接写入，可设置 writeApproval: false（自行承担风险）。' }
-  }
 }

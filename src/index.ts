@@ -20,9 +20,8 @@ export const inject = ['subprocess', 'tools']
 /** 插件所需的最小 ctx 面。 */
 export interface FlakePluginContext {
   subprocess: { spawn: SubprocessSpawnLike }
-  tools: { register(definition: FlakeToolDefinition, options?: { prepend?: boolean }): () => void }
-  get?(name: 'approval'): unknown
-  on?(event: string, listener: () => void): () => void
+  tools: { register(definition: FlakeToolDefinition): () => void }
+  on?(event: string, listener: (...args: any[]) => unknown, options?: { prepend?: boolean }): (() => void) | void
 }
 
 /**
@@ -42,17 +41,16 @@ export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): voi
   const tools = buildFlakeTools(cfg, runner, store)
   const disposers: Array<() => void> = []
   for (const definition of tools) {
-    const wrapped = { ...definition }
-    if (wrapped.gate !== undefined) {
-      const original = wrapped.gate.bind(wrapped)
-      wrapped.gate = async (exec: unknown, next: () => Promise<unknown>) => {
-        const record = (typeof exec === 'object' && exec !== null ? exec : {}) as Record<string, unknown>
-        return original({ ...record, approval: ctx.get?.('approval') }, next)
-      }
-    }
-    disposers.push(ctx.tools.register(wrapped, { prepend: true }))
+    disposers.push(ctx.tools.register(definition))
   }
   if (typeof ctx.on === 'function') {
+    if (cfg.writeApproval) {
+      ctx.on('tools/pre-execute', async (exec: { name?: unknown }, next: () => Promise<unknown>) => {
+        if (exec.name === 'flaky_quarantine') return { kind: 'ask', reason: '把测试用例写入 .flakefinder.json 隔离清单' }
+        if (exec.name === 'flaky_clear') return { kind: 'ask', reason: '从 .flakefinder.json 隔离清单移除测试用例' }
+        return next()
+      }, { prepend: true })
+    }
     ctx.on('dispose', () => {
       for (const dispose of disposers) dispose()
     })

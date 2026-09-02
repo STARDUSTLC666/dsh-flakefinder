@@ -90,39 +90,10 @@ test('quarantine/clear 写清单，report 汇总', async () => {
   await fs.rm(dir, { recursive: true, force: true })
 })
 
-test('审批门：允许放行、取消拒绝、无审批通道拒绝', async () => {
-  const { dir, cfg, store } = await tempWorld()
-  const tools = buildFlakeTools(cfg, { run: async () => ({ exitCode: 0, signal: null, stdout: '', stderr: '' }) }, store)
-  const quarantine = tools.find(t => t.name === 'flaky_quarantine')
-  assert.ok(quarantine.gate)
-
-  let called = false
-  const allowed = await quarantine.gate(
-    { approval: { request: async () => 'allowed-once' } },
-    async () => { called = true; return 'next-ok' },
-  )
-  assert.equal(allowed, 'next-ok')
-  assert.equal(called, true)
-
-  const cancelled = await quarantine.gate(
-    { approval: { request: async () => 'cancelled' } },
-    async () => { throw new Error('不应执行') },
-  )
-  assert.equal(cancelled.kind, 'deny')
-  assert.match(cancelled.reason, /被取消/)
-
-  const missing = await quarantine.gate({}, async () => { throw new Error('不应执行') })
-  assert.equal(missing.kind, 'deny')
-  assert.match(missing.reason, /没有审批通道/)
-
-  await fs.rm(dir, { recursive: true, force: true })
-})
-
-test('writeApproval: false 时不挂审批门', async () => {
+test('工具定义不再携带旧 gate 字段', async () => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'flakefinder-gate-'))
   const cfg = resolveConfig({ writeApproval: false, dataDir: path.join(dir, 'data'), quarantineFile: path.join(dir, '.flakefinder.json') }, dir)
   const tools = buildFlakeTools(cfg, { run: async () => ({ exitCode: 0, signal: null, stdout: '', stderr: '' }) }, createStore(cfg.dataDir, cfg.quarantineFile))
-  assert.equal(tools.find(t => t.name === 'flaky_quarantine').gate, undefined)
-  assert.equal(tools.find(t => t.name === 'flaky_clear').gate, undefined)
+  assert.ok(tools.every(tool => !('gate' in tool)))
   await fs.rm(dir, { recursive: true, force: true })
 })

@@ -19,12 +19,11 @@ export interface FlakePluginContext {
         spawn: SubprocessSpawnLike;
     };
     tools: {
-        register(definition: FlakeToolDefinition, options?: {
-            prepend?: boolean;
-        }): () => void;
+        register(definition: FlakeToolDefinition): () => void;
     };
-    get?(name: 'approval'): unknown;
-    on?(event: string, listener: () => void): () => void;
+    on?(event: string, listener: (...args: any[]) => unknown, options?: {
+        prepend?: boolean;
+    }): (() => void) | void;
 }
 /**
  * 插件入口：解析配置、封装执行器与存储、注册五个工具。
