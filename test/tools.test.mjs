@@ -11,6 +11,21 @@ function tapFor(rows) {
   return rows.map((row, i) => (row === 'ok' ? 'ok' : 'not ok') + ' ' + (i + 1) + ' - t' + (i + 1)).join('\n') + '\n1..' + rows.length + '\n'
 }
 
+test('quarantine/clear enforce array bounds before touching the store', async () => {
+  const store = {
+    async addQuarantine() { assert.fail('Invalid input must not write') },
+    async removeQuarantine() { assert.fail('Invalid input must not write') },
+  }
+  const tools = buildFlakeTools(resolveConfig({}), {}, store)
+  for (const name of ['flaky_quarantine', 'flaky_clear']) {
+    const tool = tools.find((tool) => tool.name === name)
+    assert.ok(!('minItems' in tool.parameters.properties.tests))
+    assert.ok(!('maxItems' in tool.parameters.properties.tests))
+    await assert.rejects(tool.execute({ tests: [], reason: 'regression' }), /至少包含一个/)
+    await assert.rejects(tool.execute({ tests: Array(101).fill('a.test.mjs'), reason: 'regression' }), /最多 100 条/)
+  }
+})
+
 function fakeRunner(scripts) {
   const calls = []
   return {

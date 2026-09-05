@@ -40,8 +40,6 @@ function compileParameters(spec: Record<string, any>): { type: 'object'; propert
     if (typeof prop?.type === 'string') node.type = prop.type
     if (typeof prop?.description === 'string') node.description = prop.description
     if (typeof prop?.items === 'string') node.items = { type: prop.items }
-    if (prop?.minItems !== undefined) node.minItems = prop.minItems
-    if (prop?.maxItems !== undefined) node.maxItems = prop.maxItems
     properties[key] = node
   }
   return { type: 'object', properties, ...(required.length > 0 ? { required } : {}) }
@@ -226,7 +224,7 @@ export function buildFlakeTools(
     name: 'flaky_quarantine',
     description: '把确认的 flaky 用例写入项目根 .flakefinder.json 隔离清单（不修改测试源码）。需要 flaky_detect 判定为 flaky 后再使用。',
     parameters: compileParameters({
-      tests: { type: 'array', items: 'string', minItems: 1, maxItems: 100, required: true, description: '测试引用数组：文件路径，或 "文件路径 > 用例名"。' },
+      tests: { type: 'array', items: 'string', required: true, description: '1-100 条测试引用：文件路径，或 "文件路径 > 用例名"。' },
       reason: { type: 'string', required: true, description: '隔离原因（会写进清单，例如：定时器竞态，见 issue #12）。' },
     }),
     output: {
@@ -254,7 +252,7 @@ export function buildFlakeTools(
     name: 'flaky_clear',
     description: '从隔离清单移除已经恢复稳定的用例。建议先 flaky_detect 验证多轮全部通过后再清除。',
     parameters: compileParameters({
-      tests: { type: 'array', items: 'string', minItems: 1, maxItems: 100, required: true, description: '测试引用数组：文件路径，或 "文件路径 > 用例名"。' },
+      tests: { type: 'array', items: 'string', required: true, description: '1-100 条测试引用：文件路径，或 "文件路径 > 用例名"。' },
     }),
     output: {
       schema: {
