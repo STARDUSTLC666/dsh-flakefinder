@@ -36,7 +36,7 @@ export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): voi
     cfg = resolveConfig(null)
   }
 
-  const runner = createSubprocessRunner(ctx.subprocess.spawn, cfg.graceMs, cfg.timeoutMs)
+  const runner = createSubprocessRunner((spec) => ctx.subprocess.spawn(spec), cfg.graceMs, cfg.timeoutMs)
   const store = createStore(cfg.dataDir, cfg.quarantineFile)
   const tools = buildFlakeTools(cfg, runner, store)
   const disposers: Array<() => void> = []
