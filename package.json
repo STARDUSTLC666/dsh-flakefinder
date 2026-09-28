@@ -1,6 +1,6 @@
 {
   "name": "dsh-flakefinder",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "DSH 测试稳定性插件：重复运行 vitest/jest/pytest/node:test 找出 flaky 用例，提供历史与隔离清单，零运行时依赖。",
   "type": "module",
   "main": "lib/index.js",
