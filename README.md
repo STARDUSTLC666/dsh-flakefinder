@@ -8,6 +8,10 @@ DeepSeek Harness 测试稳定性插件：支持 vitest / jest / pytest / node:te
 
 [![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
 
+## 兼容性
+
+验证宿主：官方源码构建的 Harness `0.2.0-rc.1`（commit `407e65c8`）+ Node `24.16.0`（2026-09-28）。44 项插件测试在隔离环境全部通过；同一个宿主里 18 个插件共同加载，注册 6 个工具，工具 schema 与健康检查契约通过。本轮未启用真实端口与外部服务。
+
 ## 工具
 
 | 工具 | 作用 | 写操作 |
