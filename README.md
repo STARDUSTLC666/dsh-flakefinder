@@ -1,117 +1,44 @@
 # dsh-flakefinder
 
-> 让 agent 分清「代码坏了」还是「测试在抽风」。
+[English](README.en.md)
 
-DeepSeek Harness 测试稳定性插件：支持 vitest / jest / pytest / node:test，重复运行测试并识别 flaky 用例，历史留档、隔离清单、写操作审批门。零运行时依赖。
+重复运行测试，找出偶发失败用例并保留调查记录。
 
-![license](https://img.shields.io/npm/l/dsh-flakefinder) ![stars](https://img.shields.io/github/stars/STARDUSTLC666/dsh-flakefinder?style=social)
+[![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://img.shields.io/npm/dm/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder)
 
-[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
+## 功能
 
-## 兼容性
-
-验证宿主：官方源码构建的 Harness `0.2.0-rc.1`（commit `407e65c8`）+ Node `24.16.0`（2026-09-28）。44 项插件测试在隔离环境全部通过；同一个宿主里 18 个插件共同加载，注册 6 个工具，工具 schema 与健康检查契约通过。本轮未启用真实端口与外部服务。
-
-2026-09-13 修复：保留宿主 `subprocess.spawn` 的服务对象，避免方法独立传递后因 `this` 丢失而报错。该路径已在隔离宿主进程服务中实测通过。`flaky_detect` 已通过真实宿主进程服务连续运行三轮 Node 测试，正确返回 `stable-pass`。
-
-## 工具
-
-| 工具 | 作用 | 写操作 |
-| :-- | :-- | :-- |
-| `flaky_detect` | 重复运行测试 N 次，判定 stable-pass / stable-fail / flaky | 否（写历史） |
-| `flaky_history` | 查询检测历史，按目标过滤 | 否 |
-| `flaky_report` | 汇总隔离清单 + 历史，输出稳定性报告 | 否 |
-| `flaky_quarantine` | 把 flaky 用例写入 `.flakefinder.json` 隔离清单 | 是（审批门） |
-| `flaky_clear` | 从隔离清单移除已恢复的用例 | 是（审批门） |
-
-支持框架：
-
-- vitest：读取 `node_modules/vitest/vitest.mjs`，使用 JSON reporter
-- jest：读取 `node_modules/jest/bin/jest.js`，使用 `--json --outputFile`
-- pytest：`python -m pytest --junitxml`，解析 JUnit XML（支持 setup.cfg / pyproject / pytest.ini / tox.ini 探测与 XML 实体解码）
-- node:test：`node --test --test-reporter=tap`，解析 TAP（含 SKIP 指令归类）
-- `framework: auto` 按 vitest → jest → pytest → node:test 自动探测
+- 支持 Vitest、Jest、pytest 和 node:test。
+- 记录重复运行结果与失败历史。
+- 生成和维护用例隔离清单。
 
 ## 安装
 
-```bash
-dsh plugin --profile web add dsh-flakefinder
-```
-
-或手动安装后在 profile 的 `cordis.patch.yml` 插入：
-
-```yaml
-- id: flakefinder
-  name: 'dsh-flakefinder'
-  config:
-    defaultRuns: 5
-    writeApproval: true
-```
-
-## 卸载
+桌面版可在「插件」面板按包名 `dsh-flakefinder` 安装。已配置 dsh 命令时也可使用：
 
 ```bash
-dsh plugin --profile web remove dsh-flakefinder
+dsh plugin --profile desktop add dsh-flakefinder
 ```
 
-卸载后重启 Web 服务。如需彻底清理，可再手动删除自己 profile `cordis.patch.yml` 中覆盖的插件行。
+网页版把命令中的 `desktop` 改为 `web`。安装后重启 DSH。
 
-## 使用示例
+## 开始使用
 
-```text
-用户：src/checkout.test.ts 最近老失败，帮我判断一下
-Agent：
-  flaky_detect(target="src/checkout.test.ts", runs=5)
-  → 判定：flaky；3/5 通过，失败集中在 useFakeTimers 用例
-  → flaky_quarantine(tests=["src/checkout.test.ts > 定时器恢复"], reason="定时器竞态")
-```
+可说：“把这组测试重复运行十次，找出偶发失败的用例并总结差异。”
 
-## 配置
+## 依赖与配置
 
-| 字段 | 默认 | 说明 |
-| :-- | :-- | :-- |
-| `defaultRuns` | `5` | `flaky_detect` 默认重复次数（3-20） |
-| `maxRuns` | `20` | 单次允许的最大重复次数（3-50） |
-| `timeoutMs` | `120000` | 单轮测试运行超时 |
-| `graceMs` | `10000` | 超时后宽限 |
-| `writeApproval` | `true` | 隔离清单写操作是否走审批门 |
-| `dataDir` | `DSH_HOME/.dsh-flakefinder` | 历史存储目录 |
-| `quarantineFile` | `<cwd>/.flakefinder.json` | 隔离清单路径 |
-| `pythonPath` | `DSH_FLAKEFINDER_PYTHON` 或 `python`/`python3` | pytest 使用的 Python 解释器 |
+需要项目已有可执行的测试命令。隔离清单用于记录问题，具体门禁按项目配置。
 
-## 隔离清单格式
+详细配置、工具参数与排错见[使用说明](docs/USAGE.md)。从源码独立开发时，Node 要求以 [package.json](package.json) 为准。
 
-```json
-{
-  "version": 1,
-  "quarantined": [
-    {
-      "file": "src/checkout.test.ts",
-      "name": "使用假定时器后恢复真实定时器",
-      "reason": "定时器竞态，见 issue #12",
-      "since": "2026-08-16T00:00:00.000Z"
-    }
-  ]
-}
-```
+## 文档
 
-隔离清单只记录，不修改测试源码；agent 跑测试前应先查阅 `flaky_report`。
-
-## 工程
-
-- Node >= 22.13，TypeScript，零运行时依赖
-- 测试进程走 DSH 官方 subprocess 服务，argv 数组、无 shell
-- 全量单测 40+：解析、判定、存储、审批门、pytest 计划、subprocess 超时、注册与 manifest
-- `pnpm test`：构建 + `node --test`
-
-## 发布门禁
-
-1. `pnpm test` 全绿
-2. `pnpm typecheck`
-3. 危险模式扫描（eval / child_process / 密钥零容忍）
-4. 真实 profile 冒烟：全新临时 profile 安装插件 → 真 boot → stderr 零报错
-5. manifest 自检（bundle patch / exports / files 白名单）
+- [使用与排错](docs/USAGE.md)
+- [更新记录](CHANGELOG.md)
+- [验证范围与历史记录](docs/VALIDATION.md)
+- [问题反馈与功能建议](https://github.com/STARDUSTLC666/dsh-flakefinder/issues)
 
 ## License
 
-MIT
+[MIT](LICENSE)
