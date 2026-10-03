@@ -2,6 +2,8 @@
 
 [中文](README.md)
 
+![dsh-flakefinder whale girl plugin cover](https://raw.githubusercontent.com/STARDUSTLC666/dsh-flakefinder/master/assets/cover-whale-girl.png)
+
 Repeat test runs to identify intermittent failures and keep investigation history.
 
 [![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://img.shields.io/npm/dm/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder)
