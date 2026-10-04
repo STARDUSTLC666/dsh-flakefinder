@@ -6,7 +6,7 @@
 
 重复运行测试，找出偶发失败用例并保留调查记录。
 
-[![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://img.shields.io/npm/dm/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder)
+[![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
 
 ## 功能
 

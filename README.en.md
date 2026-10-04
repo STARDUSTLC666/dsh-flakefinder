@@ -6,7 +6,7 @@
 
 Repeat test runs to identify intermittent failures and keep investigation history.
 
-[![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://img.shields.io/npm/dm/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder)
+[![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
 
 ## What it does
 
