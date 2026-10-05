@@ -12,7 +12,8 @@ import {
   resolveRuns, type ResolvedFlakeConfig,
 } from './config.js'
 import { executePlan, type FlakeRun, type ProcessRunner } from './runner.js'
-import { formatRef, parseRef, type Store } from './store.js'
+import { createStore, formatRef, parseRef, type Store } from './store.js'
+import { resolve } from 'node:path'
 
 export interface ContentBlock {
   type: 'text'
@@ -124,6 +125,19 @@ export function buildFlakeTools(
   runner: ProcessRunner,
   store: Store,
 ): FlakeToolDefinition[] {
+  return buildWorkspaceTools(cfg, runner, store).map(tool => ({ ...tool, async execute(args: unknown, exec: unknown) {
+    const context = exec as { signal?: AbortSignal; agent?: { session?: { header?: { cwd?: string } } } } | undefined
+    const signal = context?.signal
+    signal?.throwIfAborted()
+    const cwd = context?.agent?.session?.header?.cwd || process.cwd()
+    const scopedStore = context?.agent?.session?.header?.cwd && cfg.quarantineFileRelative ? createStore(cfg.dataDir, resolve(cwd, cfg.quarantineFileRelative)) : store
+    const scopedRunner: ProcessRunner = { run: (argv, options) => runner.run(argv, { ...options, cwd, signal }) }
+    const selected = buildWorkspaceTools(cfg, scopedRunner, scopedStore, cwd, signal).find(row => row.name === tool.name)!
+    return selected.execute(args, exec)
+  } }))
+}
+
+function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, store: Store, cwd = process.cwd(), signal?: AbortSignal): FlakeToolDefinition[] {
   const detect: FlakeToolDefinition = {
     name: 'flaky_detect',
     description: '重复运行测试多次并判定稳定性：stable-pass（全过）/ stable-fail（全挂）/ flaky（时好时坏）。支持 vitest / jest / pytest / node:test，自动探测本地框架。结果写入历史供 flaky_report 分析。',
@@ -145,11 +159,12 @@ export function buildFlakeTools(
       const target = assertTarget(requiredString(args, 'target', '测试目标'))
       const requested: Framework = readFramework(args.framework)
       const runs = resolveRuns(args.runs, cfg)
-      const plans = Array.from({ length: runs }, (_, index) => buildPlan(process.cwd(), target, requested, index, cfg.pythonPath))
+      const plans = Array.from({ length: runs }, (_, index) => buildPlan(cwd, target, requested, index, cfg.pythonPath))
       const framework = plans[0]?.framework ?? 'node'
       const executed: FlakeRun[] = []
       for (let index = 0; index < plans.length; index += 1) {
-        executed.push(await executePlan(runner, plans[index]!, index + 1, cfg.timeoutMs))
+        signal?.throwIfAborted()
+        executed.push(await executePlan(runner, plans[index]!, index + 1, cfg.timeoutMs, cwd, signal))
       }
       const result = aggregate(executed.map(item => ({ index: item.index, report: item.report, durationMs: item.durationMs, error: item.error })))
       const flaky = flakyTests(result)
@@ -166,6 +181,7 @@ export function buildFlakeTools(
         skippedCount: result.skippedCount,
         flakyTests: flaky,
       }
+      signal?.throwIfAborted()
       await store.appendHistory(entry)
       return {
         target,

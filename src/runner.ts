@@ -16,7 +16,7 @@ export interface RunResult {
 }
 
 export interface ProcessRunner {
-  run(argv: readonly string[], options?: { timeoutMs?: number }): Promise<RunResult>
+  run(argv: readonly string[], options?: { timeoutMs?: number; cwd?: string; signal?: AbortSignal }): Promise<RunResult>
 }
 
 export interface SubprocessHandleLike {
@@ -46,19 +46,21 @@ export function createSubprocessRunner(spawn: SubprocessSpawnLike, graceMs: numb
     async run(argv, options) {
       const timeoutMs = options?.timeoutMs ?? defaultTimeoutMs
       const controller = new AbortController()
+      const signal = options?.signal ? AbortSignal.any([options.signal, controller.signal]) : controller.signal
+      signal.throwIfAborted()
       const timer = setTimeout(() => controller.abort(new Error('flakefinder test run timed out')), timeoutMs)
       let handle: SubprocessHandleLike
       try {
         handle = spawn({
           argv,
-          cwd: process.cwd(),
+          cwd: options?.cwd ?? process.cwd(),
           stdio: {
             stdin: 'ignore',
             stdout: { maxBytes: COLLECT_BYTES },
             stderr: { maxBytes: COLLECT_BYTES },
           },
           graceMs,
-          signal: controller.signal,
+          signal,
         })
         const outcome = await handle.done
         const stdout = handle.collected.stdout?.readFrom(0).text ?? ''
@@ -86,9 +88,11 @@ function stderrTail(stderr: string): string {
 }
 
 /** 执行一个测试计划并读取报告；进程失败但报告存在时仍返回报告。 */
-export async function executePlan(runner: ProcessRunner, plan: TestPlan, index: number, timeoutMs: number): Promise<FlakeRun> {
+export async function executePlan(runner: ProcessRunner, plan: TestPlan, index: number, timeoutMs: number, cwd?: string, signal?: AbortSignal): Promise<FlakeRun> {
   const started = Date.now()
-  const result = await runner.run(plan.argv, { timeoutMs })
+  signal?.throwIfAborted()
+  const result = await runner.run(plan.argv, { timeoutMs, cwd, signal })
+  signal?.throwIfAborted()
   const durationMs = Date.now() - started
 
   if (plan.reportKind === 'tap') {

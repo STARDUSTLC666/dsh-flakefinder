@@ -6,6 +6,8 @@
 
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { randomUUID } from 'node:crypto'
+import lockfile from 'proper-lockfile'
 
 export interface HistoryEntry {
   timestamp: string
@@ -53,28 +55,48 @@ export interface ParsedRef {
 export function createStore(dataDir: string, quarantineFile: string): Store {
   const historyPath = path.join(dataDir, HISTORY_FILE)
 
+  async function readJson(file: string): Promise<unknown> {
+    try {
+      const info = await fs.lstat(file)
+      if (!info.isFile() || info.isSymbolicLink() || info.size > 8 * 1024 * 1024) throw new Error('文件不是普通 JSON 文件或超过 8 MiB')
+      return JSON.parse(await fs.readFile(file, 'utf8'))
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
+      throw new Error('记录无法读取，原文件已保留：' + file + '。' + (error instanceof Error ? error.message : String(error)))
+    }
+  }
+  async function locked<T>(file: string, update: () => Promise<T>): Promise<T> {
+    await fs.mkdir(path.dirname(file), { recursive: true })
+    const unlock = await lockfile.lock(file, { realpath: false, retries: { retries: 30, minTimeout: 25, maxTimeout: 100 } })
+    try { return await update() } finally { await unlock() }
+  }
+  async function atomicWrite(file: string, value: unknown): Promise<void> {
+    const bytes = JSON.stringify(value, null, 2) + '\n'
+    if (Buffer.byteLength(bytes) > 8 * 1024 * 1024) throw new Error('记录超过 8 MiB，本次没有保存。')
+    const temp = file + '.tmp-' + randomUUID()
+    try { await fs.writeFile(temp, bytes, { flag: 'wx', mode: 0o600 }); await fs.rename(temp, file) }
+    finally { await fs.unlink(temp).catch(() => {}) }
+  }
+
   async function ensureDir(): Promise<void> {
     await fs.mkdir(dataDir, { recursive: true })
   }
 
   async function readHistory(): Promise<HistoryEntry[]> {
-    try {
-      const text = await fs.readFile(historyPath, 'utf8')
-      const parsed: unknown = JSON.parse(text)
-      return Array.isArray(parsed) ? parsed as HistoryEntry[] : []
-    } catch {
-      return []
-    }
+    const parsed = await readJson(historyPath)
+    if (parsed === undefined) return []
+    if (!Array.isArray(parsed) || parsed.some(entry => !entry || typeof entry.target !== 'string' || typeof entry.timestamp !== 'string' || !Array.isArray(entry.flakyTests))) throw new Error('历史记录格式无效，原文件已保留：' + historyPath)
+    return parsed as HistoryEntry[]
   }
 
   async function appendHistory(entry: HistoryEntry): Promise<void> {
     await ensureDir()
+    return locked(historyPath, async () => {
     const list = await readHistory()
     list.unshift(entry)
     const trimmed = list.slice(0, HISTORY_LIMIT)
-    const tmp = historyPath + '.tmp-' + process.pid
-    await fs.writeFile(tmp, JSON.stringify(trimmed, null, 2), 'utf8')
-    await fs.rename(tmp, historyPath)
+    await atomicWrite(historyPath, trimmed)
+    })
   }
 
   async function listHistory(target: string | undefined, limit: number): Promise<HistoryEntry[]> {
@@ -84,27 +106,20 @@ export function createStore(dataDir: string, quarantineFile: string): Store {
   }
 
   async function readQuarantine(): Promise<QuarantineDocument> {
-    try {
-      const text = await fs.readFile(quarantineFile, 'utf8')
-      const parsed: unknown = JSON.parse(text)
-      const obj = (parsed ?? {}) as Record<string, unknown>
-      return {
-        version: 1,
-        quarantined: Array.isArray(obj.quarantined) ? obj.quarantined as QuarantineEntry[] : [],
-      }
-    } catch {
-      return { version: 1, quarantined: [] }
-    }
+    const parsed = await readJson(quarantineFile)
+    if (parsed === undefined) return { version: 1, quarantined: [] }
+    const obj = parsed as QuarantineDocument
+    if (!obj || obj.version !== 1 || !Array.isArray(obj.quarantined) || obj.quarantined.some(entry => !entry || typeof entry.file !== 'string' || !entry.file || entry.name !== null && typeof entry.name !== 'string' || typeof entry.reason !== 'string' || typeof entry.since !== 'string')) throw new Error('隔离清单格式无效，原文件已保留：' + quarantineFile)
+    return obj
   }
 
   async function writeQuarantine(doc: QuarantineDocument): Promise<void> {
     await fs.mkdir(path.dirname(quarantineFile), { recursive: true })
-    const tmp = quarantineFile + '.tmp-' + process.pid
-    await fs.writeFile(tmp, JSON.stringify(doc, null, 2) + '\n', 'utf8')
-    await fs.rename(tmp, quarantineFile)
+    await atomicWrite(quarantineFile, doc)
   }
 
   async function addQuarantine(refs: ParsedRef[], reason: string): Promise<{ added: QuarantineEntry[]; file: string }> {
+    return locked(quarantineFile, async () => {
     const doc = await readQuarantine()
     const now = new Date().toISOString()
     const added: QuarantineEntry[] = []
@@ -122,9 +137,11 @@ export function createStore(dataDir: string, quarantineFile: string): Store {
     doc.quarantined.sort((a, b) => a.file.localeCompare(b.file) || (a.name ?? '').localeCompare(b.name ?? ''))
     await writeQuarantine(doc)
     return { added, file: quarantineFile }
+    })
   }
 
   async function removeQuarantine(refs: ParsedRef[]): Promise<{ removed: QuarantineEntry[]; file: string }> {
+    return locked(quarantineFile, async () => {
     const doc = await readQuarantine()
     const removed: QuarantineEntry[] = []
     doc.quarantined = doc.quarantined.filter(item => {
@@ -134,6 +151,7 @@ export function createStore(dataDir: string, quarantineFile: string): Store {
     })
     await writeQuarantine(doc)
     return { removed, file: quarantineFile }
+    })
   }
 
   return {

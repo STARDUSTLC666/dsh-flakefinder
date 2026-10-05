@@ -31,6 +31,7 @@ export interface ResolvedFlakeConfig {
     writeApproval: boolean;
     dataDir: string;
     quarantineFile: string;
+    quarantineFileRelative?: string;
     pythonPath: string;
 }
 /** 解析并校验配置，非法值抛出中文错误。 */

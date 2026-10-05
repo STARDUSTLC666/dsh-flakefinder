@@ -36,6 +36,7 @@ export interface ResolvedFlakeConfig {
   writeApproval: boolean
   dataDir: string
   quarantineFile: string
+  quarantineFileRelative?: string
   pythonPath: string
 }
 
@@ -92,7 +93,8 @@ export function resolveConfig(config: FlakeConfig | undefined | null, cwd = proc
     ? cfg.pythonPath.trim()
     : (process.env.DSH_FLAKEFINDER_PYTHON?.trim() || (process.platform === 'win32' ? 'python' : 'python3'))
 
-  return { defaultRuns, maxRuns, timeoutMs, graceMs, writeApproval, dataDir, quarantineFile, pythonPath }
+  const relativeQuarantine = typeof cfg.quarantineFile === 'string' && cfg.quarantineFile.trim() ? cfg.quarantineFile.trim() : '.flakefinder.json'
+  return { defaultRuns, maxRuns, timeoutMs, graceMs, writeApproval, dataDir, quarantineFile, pythonPath, ...(path.isAbsolute(relativeQuarantine) ? {} : { quarantineFileRelative: relativeQuarantine }) }
 }
 
 function readRuns(label: string, value: unknown, lo: number, hi: number): number {

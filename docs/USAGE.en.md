@@ -2,6 +2,10 @@
 
 [Overview](../README.en.md) · [Changelog](../CHANGELOG.md) · [Validation](VALIDATION.md)
 
+## Current improvements
+
+Relative quarantineFile defaults to .flakefinder.json in the current workspace. Cancellation stops the current process. Concurrent writers preserve history and quarantine entries; damaged files are preserved with explicit errors for inspection.
+
 ## Tools
 
 | Tool | Purpose | Write |

@@ -2,6 +2,10 @@
 
 [返回简介](../README.md) · [更新记录](../CHANGELOG.md) · [验证记录](VALIDATION.md)
 
+## 本次改进
+
+相对 quarantineFile 默认在当前工作区的 .flakefinder.json。取消会停止当前测试进程；同一数据目录的并发写入不会丢失历史或隔离条目。损坏文件会报错并保留，先备份后检查。
+
 ## 工具
 
 | 工具 | 作用 | 写操作 |
@@ -87,7 +91,7 @@ Agent：
 
 ## 工程
 
-- Node >= 22.13，TypeScript，零运行时依赖
+- Node >= 22.13，TypeScript，仅依赖文件锁库
 - 测试进程走 DSH 官方 subprocess 服务，argv 数组、无 shell
 - 全量单测 40+：解析、判定、存储、审批门、pytest 计划、subprocess 超时、注册与 manifest
 - `pnpm test`：构建 + `node --test`

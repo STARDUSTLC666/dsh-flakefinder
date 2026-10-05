@@ -14,6 +14,8 @@ export interface RunResult {
 export interface ProcessRunner {
     run(argv: readonly string[], options?: {
         timeoutMs?: number;
+        cwd?: string;
+        signal?: AbortSignal;
     }): Promise<RunResult>;
 }
 export interface SubprocessHandleLike {
@@ -63,4 +65,4 @@ export interface FlakeRun {
     error?: string;
 }
 /** 执行一个测试计划并读取报告；进程失败但报告存在时仍返回报告。 */
-export declare function executePlan(runner: ProcessRunner, plan: TestPlan, index: number, timeoutMs: number): Promise<FlakeRun>;
+export declare function executePlan(runner: ProcessRunner, plan: TestPlan, index: number, timeoutMs: number, cwd?: string, signal?: AbortSignal): Promise<FlakeRun>;

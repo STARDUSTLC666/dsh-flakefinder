@@ -55,3 +55,21 @@ test('历史追加与目标过滤', async () => {
 
   await fs.rm(dir, { recursive: true, force: true })
 })
+
+test('两个实例并发保存不丢历史或隔离条目，损坏记录不被覆盖', async t => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'flakefinder-concurrency-'))
+  t.after(() => fs.rm(dir, { recursive: true, force: true }))
+  const data = path.join(dir, 'data'), quarantine = path.join(dir, '.flakefinder.json')
+  const stores = [createStore(data, quarantine), createStore(data, quarantine)]
+  const base = { timestamp: new Date().toISOString(), framework: 'node', runs: 3, durationMs: 1, verdict: 'stable-pass', stablePassCount: 1, stableFailCount: 0, flakyCount: 0, skippedCount: 0, flakyTests: [] }
+  await Promise.all(Array.from({ length: 12 }, (_, i) => stores[i % 2].appendHistory({ ...base, target: i + '.test.mjs' })))
+  assert.equal((await stores[0].listHistory(undefined, 20)).length, 12)
+  await Promise.all(Array.from({ length: 12 }, (_, i) => stores[i % 2].addQuarantine([parseRef(i + '.test.mjs')], '审查')))
+  assert.equal((await stores[0].loadQuarantine()).quarantined.length, 12)
+  await fs.writeFile(quarantine, '{broken')
+  await assert.rejects(stores[1].addQuarantine([parseRef('new.test.mjs')], '审查'), /原文件已保留/)
+  assert.equal(await fs.readFile(quarantine, 'utf8'), '{broken')
+  await fs.writeFile(path.join(data, 'history.json'), '{broken')
+  await assert.rejects(stores[1].appendHistory({ ...base, target: 'new.test.mjs' }), /原文件已保留/)
+  assert.equal(await fs.readFile(path.join(data, 'history.json'), 'utf8'), '{broken')
+})
