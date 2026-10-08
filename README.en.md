@@ -8,6 +8,8 @@ Repeat test runs to identify intermittent failures and keep investigation histor
 
 [![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
 
+Feedback and contributions are welcome: report [issues](https://github.com/STARDUSTLC666/dsh-flakefinder/issues) or submit [pull requests](https://github.com/STARDUSTLC666/dsh-flakefinder/pulls).
+
 ## What it does
 
 - Support Vitest, Jest, pytest and node:test.

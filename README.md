@@ -8,6 +8,8 @@
 
 [![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
 
+欢迎使用，遇到问题或有改进建议，请提交 [issues](https://github.com/STARDUSTLC666/dsh-flakefinder/issues) 和 [PR](https://github.com/STARDUSTLC666/dsh-flakefinder/pulls)。
+
 ## 功能
 
 - 支持 Vitest、Jest、pytest 和 node:test。
