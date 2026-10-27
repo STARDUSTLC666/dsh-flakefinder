@@ -1,3 +1,4 @@
+import { registerUpdates } from '@stardustlc/dsh-updates'
 /**
  * dsh-flakefinder —— 测试稳定性工具插件（node 半身，配置走 cordis.patch.yml）。
  *
@@ -28,6 +29,8 @@ export interface FlakePluginContext {
  * 插件入口：解析配置、封装执行器与存储、注册五个工具。
  */
 export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): void {
+  registerUpdates(ctx, { name: "dsh-flakefinder" })
+
   let cfg
   try {
     cfg = resolveConfig(config)
