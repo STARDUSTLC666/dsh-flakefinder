@@ -1,6 +1,6 @@
 {
   "name": "dsh-flakefinder",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "重复运行测试，找出偶发失败用例并保留调查记录。",
   "type": "module",
   "main": "lib/index.js",
@@ -72,6 +72,6 @@
   "packageManager": "pnpm@11.7.0",
   "dependencies": {
     "proper-lockfile": "4.1.2",
-    "@stardustlc/dsh-updates": "0.1.2"
+    "@stardustlc/dsh-updates": "0.1.3"
   }
 }
