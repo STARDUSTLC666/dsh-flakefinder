@@ -4,7 +4,7 @@
 
 ![dsh-flakefinder whale girl plugin cover](https://raw.githubusercontent.com/STARDUSTLC666/dsh-flakefinder/master/assets/cover-whale-girl.png)
 
-Repeat test runs to identify intermittent failures and keep investigation history.
+Repeat test runs and retain individual results to investigate intermittent failures. Keeps workspace-scoped investigation and quarantine records, with configurable confirmation and clear permission messages for writes.
 
 [![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
 

@@ -4,7 +4,7 @@
 
 ![dsh-flakefinder 鲸鱼娘插件封面](https://raw.githubusercontent.com/STARDUSTLC666/dsh-flakefinder/master/assets/cover-whale-girl.png)
 
-重复运行测试，找出偶发失败用例并保留调查记录。
+重复运行测试并保留每次结果，定位偶发失败用例。支持工作区内的调查记录、隔离列表与清除操作；写操作按配置确认，并明确提示当前权限限制。
 
 [![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
 
