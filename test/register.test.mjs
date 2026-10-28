@@ -33,6 +33,7 @@ test('writeApproval 通过 alpha.4 tools/pre-execute 返回 ask', async () => {
   const definitions = []
   const listeners = new Map()
   const ctx = {
+    get(name) { return name === 'approval' ? { config: { policy: 'ask' } } : undefined },
     subprocess: { spawn: async () => ({}) },
     tools: { register(definition) { definitions.push(definition); return () => {} } },
     on(event, listener, options) { listeners.set(event, { listener, options }) },

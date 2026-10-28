@@ -1,6 +1,6 @@
 {
   "name": "dsh-flakefinder",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "重复运行测试，找出偶发失败用例并保留调查记录。",
   "type": "module",
   "main": "lib/index.js",

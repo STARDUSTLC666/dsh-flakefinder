@@ -10,11 +10,12 @@
 import { type FlakeConfig } from './config.js';
 import { type SubprocessSpawnLike } from './runner.js';
 import { type FlakeToolDefinition } from './tools.js';
+import { type ApprovalContext } from './approval.js';
 /** cordis 服务注入：apply 里要用 ctx.subprocess 与 ctx.tools。 */
 export declare const name = "flakefinder";
 export declare const inject: string[];
 /** 插件所需的最小 ctx 面。 */
-export interface FlakePluginContext {
+export interface FlakePluginContext extends ApprovalContext {
     subprocess: {
         spawn: SubprocessSpawnLike;
     };

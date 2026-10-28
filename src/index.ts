@@ -13,13 +13,14 @@ import { resolveConfig, type FlakeConfig } from './config.js'
 import { createSubprocessRunner, type SubprocessSpawnLike } from './runner.js'
 import { createStore } from './store.js'
 import { buildFlakeTools, type FlakeToolDefinition } from './tools.js'
+import { approvalPolicy, approvalProblem, type ApprovalContext } from './approval.js'
 
 /** cordis 服务注入：apply 里要用 ctx.subprocess 与 ctx.tools。 */
 export const name = 'flakefinder'
 export const inject = ['subprocess', 'tools']
 
 /** 插件所需的最小 ctx 面。 */
-export interface FlakePluginContext {
+export interface FlakePluginContext extends ApprovalContext {
   subprocess: { spawn: SubprocessSpawnLike }
   tools: { register(definition: FlakeToolDefinition): () => void }
   on?(event: string, listener: (...args: any[]) => unknown, options?: { prepend?: boolean }): (() => void) | void
@@ -49,6 +50,11 @@ export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): voi
   if (typeof ctx.on === 'function') {
     if (cfg.writeApproval) {
       ctx.on('tools/pre-execute', async (exec: { name?: unknown }, next: () => Promise<unknown>) => {
+        if (exec.name !== 'flaky_quarantine' && exec.name !== 'flaky_clear') return next()
+        const downstream = await next()
+        if ((downstream as { kind?: unknown })?.kind === 'deny') return downstream
+        const problem = approvalProblem(approvalPolicy(ctx, exec), 'writeApproval')
+        if (problem) return { kind: 'deny', reason: problem }
         if (exec.name === 'flaky_quarantine') return { kind: 'ask', reason: '把测试用例写入 .flakefinder.json 隔离清单' }
         if (exec.name === 'flaky_clear') return { kind: 'ask', reason: '从 .flakefinder.json 隔离清单移除测试用例' }
         return next()
