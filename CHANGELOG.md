@@ -2,6 +2,11 @@
 
 [返回简介](README.md) · [使用说明](docs/USAGE.md) · [验证记录](docs/VALIDATION.md)
 
+## 0.4.5 (2026-10-29)
+
+- 同步仓库与 npm 的简明介绍、中英文 README 和反馈入口；本次为文档与包元数据更新。
+- Sync npm descriptions and both README guides with the repository, including issue and pull-request links.
+
 ## 0.4.4 (2026-10-28)
 
 - 隔离清单写操作正确处理 never/未知审批策略，不再误报用户点击拒绝；保留宿主拒绝与原有可询问模式，不自动放宽审批。

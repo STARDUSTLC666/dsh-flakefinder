@@ -1,7 +1,7 @@
 {
   "name": "dsh-flakefinder",
-  "version": "0.4.4",
-  "description": "重复运行测试，找出偶发失败用例并保留调查记录。",
+  "version": "0.4.5",
+  "description": "DSH 偶发测试调查：重复运行、失败记录、工作区隔离列表与写操作确认。欢迎提交 issues 和 PR。",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
