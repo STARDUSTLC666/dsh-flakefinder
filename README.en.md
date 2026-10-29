@@ -6,7 +6,9 @@
 
 Repeat test runs and retain individual results to investigate intermittent failures. Keeps workspace-scoped investigation and quarantine records, with configurable confirmation and clear permission messages for writes.
 
-[![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
+[![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder) [![total downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-total-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
+
+[Download statistics](https://github.com/STARDUSTLC666/dsh-suite/blob/npm-downloads/README.md)
 
 Feedback and contributions are welcome: report [issues](https://github.com/STARDUSTLC666/dsh-flakefinder/issues) or submit [pull requests](https://github.com/STARDUSTLC666/dsh-flakefinder/pulls).
 
@@ -28,7 +30,10 @@ For the web version, replace `desktop` with `web`. Restart DSH after installatio
 
 ## Start using it
 
-Ask: “Run this test group ten times, identify intermittent failures and summarize the differences.”
+1. Start in the target test repository and confirm dependencies and the test command work.
+2. Provide the command, repeat count and scope; review the execution plan and expected file changes first.
+3. Run after confirmation and inspect per-run results, failure logs and the workspace isolation inventory.
+4. Use reproducible differences to narrow the cause; rerun the same command after fixing it, and retain an unreproduced result when appropriate.
 
 ## Requirements and configuration
 

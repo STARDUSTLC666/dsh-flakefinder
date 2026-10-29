@@ -6,7 +6,9 @@
 
 重复运行测试并保留每次结果，定位偶发失败用例。支持工作区内的调查记录、隔离列表与清除操作；写操作按配置确认，并明确提示当前权限限制。
 
-[![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
+[![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder) [![total downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-total-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
+
+[下载统计说明](https://github.com/STARDUSTLC666/dsh-suite/blob/npm-downloads/README.md)
 
 欢迎使用，遇到问题或有改进建议，请提交 [issues](https://github.com/STARDUSTLC666/dsh-flakefinder/issues) 和 [PR](https://github.com/STARDUSTLC666/dsh-flakefinder/pulls)。
 
@@ -28,7 +30,10 @@ dsh plugin --profile desktop add dsh-flakefinder
 
 ## 开始使用
 
-可说：“把这组测试重复运行十次，找出偶发失败的用例并总结差异。”
+1. 在目标测试仓库创建 DSH 会话，先确认依赖与测试命令能正常运行。
+2. 给出要重复的命令、次数和范围，先让助手说明执行计划及可能产生的文件。
+3. 确认后运行，查看每轮状态、失败日志和工作区隔离清单。
+4. 根据可重复的差异缩小问题，修复后用同一命令复测；没有复现时保留未复现结论。
 
 ## 依赖与配置
 
