@@ -1,6 +1,6 @@
 {
   "name": "dsh-flakefinder",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "description": "DSH 偶发测试调查：重复运行、失败记录、工作区隔离列表与写操作确认。欢迎提交 issues 和 PR。",
   "type": "module",
   "main": "lib/index.js",
@@ -20,7 +20,8 @@
     "README.md",
     "README.en.md",
     "docs",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "assets/plugin-icon.webp"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/build-updates.mjs",
@@ -73,5 +74,6 @@
   "dependencies": {
     "proper-lockfile": "4.1.2",
     "@stardustlc/dsh-updates": "0.1.3"
-  }
+  },
+  "icon": "./assets/plugin-icon.webp"
 }
