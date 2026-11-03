@@ -71,19 +71,40 @@ function verdictLabel(verdict: string): string {
   }
 }
 
-function resultSummary(result: DetectionResult): string {
-  const lines = [
+function resultSummary(result: DetectionResult, runs: FlakeRun[] = [], subject?: { target: string; framework: string }): string {
+  const lines: string[] = []
+  if (subject !== undefined) lines.push('目标：' + subject.target + '（framework=' + subject.framework + '）')
+  lines.push(
     '判定：' + verdictLabel(result.verdict),
     '重复运行：' + String(result.runs.length) + ' 次；总耗时：' + String(Math.round(result.durationMs / 100) / 10) + ' 秒',
     '稳定通过：' + String(result.stablePassCount) + '；稳定失败：' + String(result.stableFailCount) + '；flaky：' + String(result.flakyCount) + '；跳过：' + String(result.skippedCount),
-  ]
+  )
   if (result.flakyCount > 0) {
     lines.push('flaky 用例：')
     for (const test of result.tests.filter(item => item.verdict === 'flaky')) {
       lines.push('- ' + formatRef(test) + '（失败率 ' + String(test.failureRate) + '%）')
     }
   }
+  // 部分运行崩溃时 aggregate 不抛错，但错误原文只在 run.error 里；不带到摘要里用户只能看到「flaky」而不知道进程挂了。
+  const crashed = runs.filter(run => run.report === null)
+  if (crashed.length > 0) {
+    const first = crashed.find(run => run.error !== undefined)?.error ?? '未产出报告（stderr：' + (crashed[0]!.stderr.trim().split(/\r?\n/).slice(-3).join(' | ') || '无输出') + '）'
+    lines.push('有 ' + String(crashed.length) + ' 次运行未产出报告：' + first)
+  }
+  lines.push('下一步：' + nextStepOf(result.verdict))
   return lines.join('\n')
+}
+
+/** 按判定给出下一步；文案复用 tools 里已有的工具名，避免另造词汇。 */
+function nextStepOf(verdict: string): string {
+  switch (verdict) {
+    case 'flaky': return '先用 flaky_quarantine 把这些用例写进隔离清单（写清原因），再单跑定位竞态；修复后用 flaky_detect 复查并 flaky_clear。'
+    case 'stable-fail': return '先单独跑一次这个测试看失败原因；若每次运行都崩溃（提示未产出报告），检查框架 CLI、reporter 与 pytest 的 junitxml 依赖。'
+    case 'stable-pass': return '多轮全部通过；若此前隔离过这些用例，可用 flaky_clear 移除。'
+    case 'skipped': return '所有用例被跳过：检查测试文件里的 skip / 条件编译，或 target 是否只匹配到空壳文件。'
+    case 'empty': return '没有解析到用例：确认 target 指向存在的测试文件或目录（可用 glob，如 test/**/*.test.mjs），必要时显式指定 framework。'
+    default: return '可运行 flaky_history / flaky_report 查看历史趋势。'
+  }
 }
 
 const testSchema = {
@@ -196,7 +217,7 @@ function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, st
         runResults: result.runs,
         tests: result.tests,
         flakyTests: flaky,
-        summary: resultSummary(result),
+        summary: resultSummary(result, executed, { target, framework }),
       }
     },
     timeoutMs: runsTimeout(cfg),
@@ -218,11 +239,16 @@ function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, st
       render: (_args, value) => {
         const rec = asRecord(value)
         const entries = Array.isArray(rec.entries) ? rec.entries : []
-        const lines = ['历史记录 ' + String(entries.length) + ' 条：']
+        if (entries.length === 0) {
+          return [{ type: 'text', text: '历史记录 0 条：还没有跑过 flaky_detect（或过滤条件没有命中）。下一步：先对目标运行 flaky_detect，再用本工具看趋势。' }]
+        }
+        const lines = ['历史记录 ' + String(entries.length) + ' 条（新的在前）：']
         for (const item of entries) {
           const row = asRecord(item)
-          lines.push('- ' + row.target + '（' + row.framework + '，' + verdictLabel(String(row.verdict ?? '')) + '，' + String(row.runs ?? '?') + ' 次，' + row.timestamp + '）')
+          const flaky = Number(row.flakyCount ?? 0)
+          lines.push('- ' + row.timestamp + ' ' + row.target + '（' + row.framework + '，' + verdictLabel(String(row.verdict ?? '')) + '，' + String(row.runs ?? '?') + ' 次' + (flaky > 0 ? '，flaky ' + String(flaky) : '') + '）')
         }
+        lines.push('下一步：需要判定标准/隔离清单汇总时用 flaky_report；修复后重新 flaky_detect 复查。')
         return [{ type: 'text', text: lines.join('\n') }]
       },
     },
@@ -251,7 +277,11 @@ function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, st
       },
       render: (_args, value) => {
         const rec = asRecord(value)
-        return [{ type: 'text', text: '已写入隔离清单 ' + rec.file + '，新增 ' + String(rec.addedCount ?? 0) + ' 条。' }]
+        const added = Number(rec.addedCount ?? 0)
+        const head = added === 0
+          ? '隔离清单 ' + rec.file + ' 未新增条目：这些用例已在清单里（同文件同用例名视为同一条）。'
+          : '已写入隔离清单 ' + rec.file + '，新增 ' + String(added) + ' 条。'
+        return [{ type: 'text', text: head + '\n下一步：修复后运行 flaky_detect 多轮全部通过，再用 flaky_clear 移除这些条目。' }]
       },
     },
     async execute(rawArgs: unknown) {
@@ -278,7 +308,11 @@ function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, st
       },
       render: (_args, value) => {
         const rec = asRecord(value)
-        return [{ type: 'text', text: '已从隔离清单移除 ' + String(rec.removedCount ?? 0) + ' 条。' }]
+        const removed = Number(rec.removedCount ?? 0)
+        const head = removed === 0
+          ? '隔离清单 ' + rec.file + ' 没有匹配条目可移除：请核对测试引用的文件路径与用例名（格式 "文件路径 > 用例名"），可用 flaky_report 查看清单里现有条目。'
+          : '已从隔离清单移除 ' + String(removed) + ' 条。'
+        return [{ type: 'text', text: head + (removed === 0 ? '' : '\n下一步：建议再跑一次 flaky_detect，确认移除后仍稳定。') }]
       },
     },
     async execute(rawArgs: unknown) {
@@ -312,14 +346,25 @@ function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, st
       render: (_args, value) => {
         const rec = asRecord(value)
         const quarantined = Array.isArray(rec.quarantined) ? rec.quarantined : []
+        const history = Array.isArray(rec.history) ? rec.history : []
         const lines = [
           '测试稳定性报告',
           '隔离清单：' + String(rec.quarantineFile ?? '') + '（' + String(rec.quarantinedCount ?? 0) + ' 条）',
         ]
+        if (quarantined.length === 0) lines.push('- 清单为空：还没有被隔离的用例。下一步：flaky_detect 判定为 flaky 后用 flaky_quarantine 写入。')
         for (const item of quarantined) {
           const row = asRecord(item)
           lines.push('- ' + formatRef({ file: String(row.file ?? ''), name: typeof row.name === 'string' ? row.name : null }) + '：' + String(row.reason ?? ''))
         }
+        // 报告以前只渲染隔离清单，把 payload 里的检测历史整段丢掉；用户看不到「最近判定」。
+        lines.push('', '检测历史：' + String(rec.historyCount ?? history.length) + ' 条')
+        if (history.length === 0) lines.push('- 还没有检测记录：先对一个目标运行 flaky_detect。')
+        for (const item of history.slice(0, 10)) {
+          const row = asRecord(item)
+          const flaky = Number(row.flakyCount ?? 0)
+          lines.push('- ' + row.timestamp + ' ' + row.target + '（' + verdictLabel(String(row.verdict ?? '')) + '，' + String(row.runs ?? '?') + ' 次' + (flaky > 0 ? '，flaky ' + String(flaky) : '') + '）')
+        }
+        if (history.length > 10) lines.push('…仅展示最近 10 条，其余用 flaky_history 查看')
         return [{ type: 'text', text: lines.join('\n') }]
       },
     },
@@ -350,10 +395,14 @@ function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, st
         const rec = asRecord(value)
         const checks = Array.isArray(rec.checks) ? rec.checks : []
         const lines = ['dsh-flakefinder 自检' + (rec.ok === true ? '：正常。' : '：发现问题。')]
+        const failed: string[] = []
         for (const item of checks) {
           const c = asRecord(item)
           lines.push('- ' + c.name + '：' + (c.ok === true ? '✅' : '❌ ' + String(c.detail ?? '')))
+          if (c.ok !== true) failed.push(String(c.name))
         }
+        if (failed.includes('pytest')) lines.push('下一步：仅用 vitest / jest / node:test 时 pytest 缺失不影响；需要跑 Python 测试时先 pip install pytest，或把插件配置里的 pythonPath 指到正确的解释器。')
+        else if (failed.length > 0) lines.push('下一步：按上面 ❌ 项的说明修好解释器/依赖，再运行 flaky_health 复查。')
         return [{ type: 'text', text: lines.join('\n') }]
       },
     },

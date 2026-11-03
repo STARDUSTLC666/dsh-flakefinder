@@ -108,6 +108,20 @@ Agent：
 4. 真实 profile 冒烟：全新临时 profile 安装插件 → 真 boot → stderr 零报错
 5. manifest 自检（bundle patch / exports / files 白名单）
 
+## 故障排查
+
+先运行 `flaky_health`：它检查 Python 解释器与 pytest 是否可用，并汇总默认配置。
+
+| 现象 | 常见原因 | 处理 |
+| :-- | :-- | :-- |
+| 判定「没有解析到用例」 | target 没匹配到文件，或目标文件里只有被跳过的用例 | 确认 target 指向真实测试文件/目录（支持 glob），必要时显式指定 `framework` |
+| 提示「有 N 次运行未产出报告」 | 框架 CLI 缺失、reporter 参数不被接受、pytest 缺少 junitxml 约束 | 先手动跑一次对应命令看报错；确认临时目录可写 |
+| `framework=vitest` 报找不到 `node_modules/vitest` | 没安装，或不在项目根目录调用 | 在装了框架的项目里调用，或显式指定 `framework` |
+| pytest 相关失败 | 解释器或 pytest 缺失 | `pip install pytest`，或用配置里的 `pythonPath` 指向正确解释器 |
+| 隔离/清除返回 0 条 | 引用格式或路径与清单不一致 | 用 `"文件路径 > 用例名"` 格式；先 `flaky_report` 看清单现有条目 |
+
+`flaky_detect` 的摘要会给出下一步：flaky 先隔离，稳定失败先单跑定位，稳定通过可以清除隔离。
+
 ## License
 
 MIT

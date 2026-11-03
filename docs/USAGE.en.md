@@ -50,6 +50,20 @@ Agent:
 
 See `cordis.patch.yml`; defaults: `defaultRuns=5`, `maxRuns=20`, `timeoutMs=120000`, `writeApproval=true`, `pythonPath=python` (`python3` on Linux/macOS; used for pytest runs).
 
+## Troubleshooting
+
+Run `flaky_health` first: it checks the Python interpreter and pytest availability and summarizes the defaults.
+
+| Symptom | Usual cause | What to do |
+| :-- | :-- | :-- |
+| Verdict says no tests were parsed | `target` matched nothing, or only skipped tests | Point `target` at real test files/directories (globs work), or pass `framework` explicitly |
+| "N runs produced no report" | Framework CLI missing, unsupported reporter flag, pytest lacking junitxml | Run the same command once by hand to see the real error; make sure the temp directory is writable |
+| `framework=vitest` cannot find `node_modules/vitest` | Not installed, or invoked outside the project | Call it from the project that installed the framework, or set `framework` |
+| pytest-related failure | Interpreter or pytest missing | `pip install pytest`, or point `pythonPath` at the right interpreter |
+| Quarantine/clear removed 0 entries | Reference format or path does not match the list | Use `"file path > test name"`; check existing entries with `flaky_report` |
+
+The `flaky_detect` summary always ends with the next step: quarantine flaky tests, reproduce stable failures, or clear recovered ones.
+
 ## Development
 
 ```bash
