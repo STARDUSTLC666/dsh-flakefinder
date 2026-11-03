@@ -1,5 +1,10 @@
 # 更新记录
 
+## 0.4.8 (2026-11-03)
+
+- flaky_report 渲染检测历史；flaky_detect 补目标、首个错误与按 verdict 的下一步。
+- flaky_report renders detection history; flaky_detect adds target, first error and verdict-specific next steps.
+
 ## 0.4.7 (2026-10-30)
 
 - 原生插件列表与详情新增专门生成的鲸鱼娘图标：大头像、独立功能符号、透明留白，适合 30 / 36 px 显示；原封面保留。
