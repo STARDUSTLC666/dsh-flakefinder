@@ -1,9 +1,16 @@
 # 更新记录
 
-## 0.4.8 (2026-11-03)
+## 0.4.9 (2026-11-03)
 
 - flaky_report 渲染检测历史；flaky_detect 补目标、首个错误与按 verdict 的下一步。
 - flaky_report renders detection history; flaky_detect adds target, first error and verdict-specific next steps.
+
+## 0.4.8 (2026-10-30)
+
+- 重整中英文首页：用途、三步流程图、安装入口与操作示例；详细配置与边界集中到完整说明。
+- 保留下载统计、独立更新选择、问题反馈和贡献入口；原封面与运行功能保留。
+- Refresh bilingual landing pages, workflow artwork, quick starts and reference navigation.
+
 
 ## 0.4.7 (2026-10-30)
 
