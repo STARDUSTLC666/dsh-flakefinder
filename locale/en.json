@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "FlakeFinder",
+    "description": "Investigate intermittent test failures across Vitest, Jest, pytest, and node:test with repeated runs, history tracking, and approval-gated quarantine lists."
+  }
+}

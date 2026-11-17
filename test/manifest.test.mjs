@@ -23,7 +23,22 @@ test('cordis.patch.yml 插入 flakefinder 行', () => {
   assert.match(text, /writeApproval/)
 })
 
-test('lib 已构建且导出六个工具入口', () => {
+test('lib 已构建且导出六个工具入口', async () => {
   assert.ok(fs.existsSync(path.join(root, 'lib/index.js')))
   assert.ok(fs.existsSync(path.join(root, 'lib/tools.js')))
+  assert.equal(pkg.dsh.manifestVersion, 1)
+  assert.equal(pkg.exports['./locale/*.json'], './locale/*.json')
+  assert.ok(fs.existsSync(path.join(root, 'locale/zh.json')))
+  assert.ok(fs.existsSync(path.join(root, 'locale/en.json')))
+  const { apply } = await import('../lib/index.js')
+  const active = new Set()
+  const effects = []
+  apply({
+    subprocess: { spawn() { throw new Error('unused') } },
+    tools: { register(def) { active.add(def.name); return () => active.delete(def.name) } },
+    effect(fn) { effects.push(fn()) },
+  }, {})
+  assert.equal(active.size, 6)
+  for (const dispose of effects) dispose?.()
+  assert.equal(active.size, 0)
 })

@@ -28,6 +28,7 @@ export interface FlakeToolDefinition {
     schema: Record<string, unknown>
     render(args: unknown, value: unknown): ContentBlock[]
   }
+  isConcurrencySafe?(args?: unknown): boolean
   execute(args: unknown, exec: unknown): Promise<unknown>
   timeoutMs?: number
 }
@@ -225,6 +226,7 @@ function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, st
 
   const history: FlakeToolDefinition = {
     name: 'flaky_history',
+    isConcurrencySafe: () => true,
     description: '查询 flaky_detect 的历史记录，可按测试目标过滤，用于判断某个测试是长期稳定失败还是偶发问题。',
     parameters: compileParameters({
       target: { type: 'string', description: '按测试目标过滤（可选，子串匹配）。' },
@@ -326,6 +328,7 @@ function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, st
 
   const report: FlakeToolDefinition = {
     name: 'flaky_report',
+    isConcurrencySafe: () => true,
     description: '汇总隔离清单与检测历史，输出项目测试稳定性报告（只读，不运行测试）。',
     parameters: compileParameters({
       target: { type: 'string', description: '按测试目标过滤历史（可选）。' },
@@ -387,6 +390,7 @@ function buildWorkspaceTools(cfg: ResolvedFlakeConfig, runner: ProcessRunner, st
 
   const flakyHealth: FlakeToolDefinition = {
     name: 'flaky_health',
+    isConcurrencySafe: () => true,
     description: 'dsh-flakefinder 自检：验证 Python 解释器与 pytest 是否可用（pytest 框架必需），并汇总默认配置。遇到问题时先运行本工具定位。',
     parameters: compileParameters({}),
     output: {

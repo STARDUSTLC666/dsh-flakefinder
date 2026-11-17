@@ -16,12 +16,16 @@ export declare const name = "flakefinder";
 export declare const inject: string[];
 /** 插件所需的最小 ctx 面。 */
 export interface FlakePluginContext extends ApprovalContext {
+    logger?: {
+        warn?(message: string, ...args: unknown[]): void;
+    };
     subprocess: {
         spawn: SubprocessSpawnLike;
     };
     tools: {
         register(definition: FlakeToolDefinition): () => void;
     };
+    effect?(effect: () => () => void, label?: string): unknown;
     on?(event: string, listener: (...args: any[]) => unknown, options?: {
         prepend?: boolean;
     }): (() => void) | void;

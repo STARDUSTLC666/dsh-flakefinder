@@ -21,8 +21,10 @@ export const inject = ['subprocess', 'tools']
 
 /** 插件所需的最小 ctx 面。 */
 export interface FlakePluginContext extends ApprovalContext {
+  logger?: { warn?(message: string, ...args: unknown[]): void }
   subprocess: { spawn: SubprocessSpawnLike }
   tools: { register(definition: FlakeToolDefinition): () => void }
+  effect?(effect: () => () => void, label?: string): unknown
   on?(event: string, listener: (...args: any[]) => unknown, options?: { prepend?: boolean }): (() => void) | void
 }
 
@@ -32,11 +34,16 @@ export interface FlakePluginContext extends ApprovalContext {
 export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): void {
   registerUpdates(ctx, { name: "dsh-flakefinder" })
 
+  const warn = (message: string) => {
+    if (typeof ctx.logger?.warn === 'function') ctx.logger.warn(message)
+    else console.warn(message)
+  }
+
   let cfg
   try {
     cfg = resolveConfig(config)
   } catch (error) {
-    console.warn('[dsh-flakefinder] ' + (error instanceof Error ? error.message : String(error)))
+    warn('[dsh-flakefinder] ' + (error instanceof Error ? error.message : String(error)))
     cfg = resolveConfig(null)
   }
 
@@ -47,22 +54,25 @@ export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): voi
   for (const definition of tools) {
     disposers.push(ctx.tools.register(definition))
   }
-  if (typeof ctx.on === 'function') {
-    if (cfg.writeApproval) {
-      ctx.on('tools/pre-execute', async (exec: { name?: unknown }, next: () => Promise<unknown>) => {
-        if (exec.name !== 'flaky_quarantine' && exec.name !== 'flaky_clear') return next()
-        const downstream = await next()
-        if ((downstream as { kind?: unknown })?.kind === 'deny') return downstream
-        const problem = approvalProblem(approvalPolicy(ctx, exec), 'writeApproval')
-        if (problem) return { kind: 'deny', reason: problem }
-        if (exec.name === 'flaky_quarantine') return { kind: 'ask', reason: '把测试用例写入 .flakefinder.json 隔离清单' }
-        if (exec.name === 'flaky_clear') return { kind: 'ask', reason: '从 .flakefinder.json 隔离清单移除测试用例' }
-        return next()
-      }, { prepend: true })
-    }
-    ctx.on('dispose', () => {
-      for (const dispose of disposers) dispose()
-    })
+  if (typeof ctx.on === 'function' && cfg.writeApproval) {
+    ctx.on('tools/pre-execute', async (exec: { name?: unknown }, next: () => Promise<unknown>) => {
+      if (exec.name !== 'flaky_quarantine' && exec.name !== 'flaky_clear') return next()
+      const downstream = await next()
+      if ((downstream as { kind?: unknown })?.kind === 'deny') return downstream
+      const problem = approvalProblem(approvalPolicy(ctx, exec), 'writeApproval')
+      if (problem) return { kind: 'deny', reason: problem }
+      if (exec.name === 'flaky_quarantine') return { kind: 'ask', reason: '把测试用例写入 .flakefinder.json 隔离清单' }
+      if (exec.name === 'flaky_clear') return { kind: 'ask', reason: '从 .flakefinder.json 隔离清单移除测试用例' }
+      return next()
+    }, { prepend: true })
+  }
+  const teardown = () => {
+    for (const dispose of disposers) dispose()
+  }
+  if (typeof ctx.effect === 'function') {
+    ctx.effect(() => teardown, 'flakefinder.tools()')
+  } else if (typeof ctx.on === 'function') {
+    ctx.on('dispose', teardown)
   }
 }
 
