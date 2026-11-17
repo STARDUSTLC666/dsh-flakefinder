@@ -4,6 +4,8 @@
 
 **把偶发失败变成有记录、能继续排查的线索。**
 
+DeepSeek Harness（`>=0.2.2-rc.3`）偶发测试排查插件：面向 Vitest、Jest、pytest 与 `node:test` 提供多轮复跑、失败率统计、历史追踪及受宿主审批保护的工作区隔离清单管理。
+
 [![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder) [![total downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-total-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
 
 **[安装使用](#安装) · [使用流程](#开始使用) · [完整说明](https://github.com/STARDUSTLC666/dsh-flakefinder/blob/master/docs/REFERENCE.zh.md)**

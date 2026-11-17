@@ -4,6 +4,8 @@
 
 **Turn intermittent test failures into traceable evidence.**
 
+Flaky test investigation plugin for DeepSeek Harness (`>=0.2.2-rc.3`): runs Vitest, Jest, pytest, and `node:test` repeatedly, tracks failure rates across runs, and manages approval-gated workspace quarantine lists.
+
 [![npm](https://img.shields.io/npm/v/dsh-flakefinder)](https://www.npmjs.com/package/dsh-flakefinder) [![downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder) [![total downloads](https://raw.githubusercontent.com/STARDUSTLC666/dsh-suite/npm-downloads/assets/dsh-flakefinder-total-downloads.svg)](https://www.npmjs.com/package/dsh-flakefinder)
 
 **[Install](#install) · [Workflow](#start-using-it) · [Full guide](https://github.com/STARDUSTLC666/dsh-flakefinder/blob/master/docs/REFERENCE.en.md)**
