@@ -1,6 +1,6 @@
 {
   "name": "dsh-flakefinder",
-  "version": "0.4.14",
+  "version": "0.4.15",
   "description": "DeepSeek Harness 偶发测试排查插件：多轮复跑、失败率统计、差异追踪与工作区隔离清单。欢迎提交 issues 和 PR。",
   "type": "module",
   "main": "lib/index.js",
@@ -48,7 +48,12 @@
     "testing",
     "flaky-test",
     "quality",
-    "dsh-plugin"
+    "dsh-plugin",
+    "deepseek",
+    "ai-agent",
+    "flaky-tests",
+    "ci",
+    "测试排查"
   ],
   "license": "MIT",
   "engines": {
@@ -72,7 +77,7 @@
   "packageManager": "pnpm@11.7.0",
   "dependencies": {
     "proper-lockfile": "4.1.2",
-    "@stardustlc/dsh-updates": "0.2.1"
+    "@stardustlc/dsh-updates": "0.2.2"
   },
   "icon": "./assets/plugin-icon.webp"
 }
