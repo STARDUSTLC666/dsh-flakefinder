@@ -1,5 +1,10 @@
 # 更新记录
 
+## 0.4.16 (2026-11-18)
+
+- 优化中英文偶发测试排查流程：围绕「锁定可疑用例 → 连跑抓失败率与差异 → 定位或审批隔离 → 修复后同口径复测消单」补齐四步闭环与可复制提示词。
+- Refine bilingual flaky-test workflows into a clear 4-step loop (target -> repeat & diff -> fix or quarantine -> re-verify & clear) with copy-ready prompts.
+
 ## 0.4.15 (2026-11-18)
 
 - 更新区底部新增克制、无打扰的 GitHub 点赞与问题反馈快捷链接，并完善中英文检索关键词。

@@ -35,14 +35,18 @@ For the web profile, replace `desktop` with `web`. Restart that DSH profile afte
 
 ## Start using it
 
-1. Start in the target test repository and confirm dependencies and the test command work.
-2. Provide the command, repeat count and scope; review the execution plan and expected file changes first.
-3. Run after confirmation and inspect per-run results, failure logs and the workspace isolation inventory.
-4. Use reproducible differences to narrow the cause; rerun the same command after fixing it, and retain an unreproduced result when appropriate.
+When a test passes locally but fails intermittently in CI, turn guesswork into repeatable evidence in four steps:
 
-Example request：
+1. **Point at the suspect test**: Open a session in the repo and name the flaky test file or suite (supports Vitest, Jest, pytest, and `node:test`).
+2. **Repeat & capture failure rate**: Ask the assistant to repeat the target test 10–20 times, recording pass/fail ratios and preserving failure stack traces.
+3. **Isolate root cause or quarantine**: Compare passing vs. failing runs to spot timing races or shared state; if needed, approve adding the test to `.flakefinder.json` while working on a fix.
+4. **Verify the fix with the same loop**: Re-run the exact repeat count after patching and clear the test from the quarantine list once confirmed stable.
 
-> Explain the plan and effects of repeating this test command, then run it after confirmation and retain every result.
+Ready-to-copy prompts:
+
+- **Reproduce an intermittent failure**: `test/checkout.spec.ts fails sporadically in CI — repeat just that file 15 times, report the failure rate, and summarize what differs on failed runs.`
+- **Check existing flaky inventory**: `Show the recorded flaky test history and current quarantine list for this repo.`
+- **Verify fix & unquarantine**: `Re-run that test 20 times after my timer cleanup fix, and remove it from quarantine once all runs pass.`
 
 ## Before you start
 
