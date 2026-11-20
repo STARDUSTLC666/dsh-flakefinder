@@ -128,21 +128,16 @@ function decodeXmlEntities(text: string): string {
 /** 解析 pytest 的 JUnit XML 报告。 */
 export function parseJunitReport(text: string): NormalizedRun {
   const tests: NormalizedTest[] = []
-  const block = /<testcase\b([^>]*)>([\s\S]*?)<\/testcase\s*>/gi
-  const single = /<testcase\b([^>]*)\/>/gi
-  for (const m of text.matchAll(block)) {
+  // Match self-closing and paired nodes in one pass; separate regexes can let
+  // an empty node consume the closing tag of the following failed testcase.
+  const cases = /<testcase\b([^>]*?)(?:\s*\/>|>([\s\S]*?)<\/testcase\s*>)/gi
+  for (const m of text.matchAll(cases)) {
     const tag = m[1]!
-    const body = m[2]!
+    const body = m[2] ?? ''
     const classname = decodeXmlEntities(attrOf(tag, 'classname')) || '(pytest)'
     const name = decodeXmlEntities(attrOf(tag, 'name')) || '(unnamed)'
     const status: TestStatus = /<(?:failure|error)\b/.test(body) ? 'failed' : /<skipped\b/.test(body) ? 'skipped' : 'passed'
-    tests.push({ id: classname + ' > ' + name, file: classname, name, status, durationMs: Math.max(0, Number(attrOf(tag, 'time')) || 0) })
-  }
-  for (const m of text.matchAll(single)) {
-    const tag = m[1]!
-    const classname = decodeXmlEntities(attrOf(tag, 'classname')) || '(pytest)'
-    const name = decodeXmlEntities(attrOf(tag, 'name')) || '(unnamed)'
-    tests.push({ id: classname + ' > ' + name, file: classname, name, status: 'passed', durationMs: Math.max(0, Number(attrOf(tag, 'time')) || 0) })
+    tests.push({ id: classname + ' > ' + name, file: classname, name, status, durationMs: Math.max(0, Number(attrOf(tag, 'time')) || 0) * 1000 })
   }
   const failed = tests.filter(item => item.status === 'failed').length
   const skipped = tests.filter(item => item.status === 'skipped').length
@@ -155,12 +150,12 @@ export function parseTapReport(text: string): NormalizedRun {
   const lines = text.split(/\r?\n/)
   let index = 0
   for (const line of lines) {
-    const match = /^(not ok|ok)\s+(\d+)\s+-\s*(.+?)\s*$/.exec(line.trim())
+    const match = /^(not ok|ok)\s+(\d+)\s+-\s*(.+?)\s*$/.exec(line)
     if (match === null) continue
     const failed = match[1] === 'not ok'
     index += 1
     const rawName = match[3] ?? '(unnamed)'
-    const skipped = /#\s*SKIP\b/i.test(rawName)
+    const skipped = /#\s*(?:SKIP|TODO)\b/i.test(rawName)
     const name = rawName.replace(/\s+#.*$/, '')
     tests.push({
       id: 'node:' + String(index) + ' > ' + name,
