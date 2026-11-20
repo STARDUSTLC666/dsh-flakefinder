@@ -1,5 +1,11 @@
 # 更新记录
 
+## 0.4.22 (2026-11-20)
+
+- 修复测试进程在报告写出后崩溃或被终止却仍判定稳定通过的问题；TAP / JSON / JUnit 都校验进程结果，保留已产生的断言与历史格式，并在摘要中呈现运行异常。
+- Honor abnormal process exits after TAP/JSON/JUnit reporting, preserving assertion details and history formats while preventing false stable-pass verdicts and surfacing runner failures.
+- 同步共享更新组件 0.2.9，修复取消窗口和失败响应清理，并确保运行中旧协调器在空闲后接管修复。
+
 ## 0.4.21 (2026-11-20)
 
 - 升级共享更新组件至 `@stardustlc/dsh-updates@0.2.7`：对话页「有新版本」提醒浮卡支持无交互 15 秒自动收起（悬停、聚焦、查看记录或确认弹窗时自动暂停，安装成功提示 6 秒收起，安装中/失败/需要重启仍保持常驻不隐藏）。

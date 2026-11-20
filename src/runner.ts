@@ -96,14 +96,19 @@ export async function executePlan(runner: ProcessRunner, plan: TestPlan, index: 
   signal?.throwIfAborted()
   const durationMs = Date.now() - started
 
-  if (plan.reportKind === 'tap') {
+  const completed = (report: NormalizedRun): FlakeRun => {
+    // A reporter can finish before teardown crashes or the process is killed.
+    // Keep its assertions, but never turn that process outcome into a pass.
+    const unexpectedExit = report.failed === 0 && (result.exitCode !== 0 || result.signal !== null)
     return {
-      index,
-      report: parseTapReport(result.stdout),
-      durationMs,
-      exitCode: result.exitCode,
-      stderr: result.stderr,
+      index, report: unexpectedExit ? { ...report, success: false } : report,
+      durationMs, exitCode: result.exitCode, stderr: result.stderr,
+      ...(unexpectedExit ? { error: '测试进程异常结束（退出码 ' + String(result.exitCode ?? 'null') + (result.signal ? '，信号 ' + result.signal : '') + '）；stderr：' + stderrTail(result.stderr) } : {}),
     }
+  }
+
+  if (plan.reportKind === 'tap') {
+    return completed(parseTapReport(result.stdout))
   }
 
   let fileText = ''
@@ -128,13 +133,7 @@ export async function executePlan(runner: ProcessRunner, plan: TestPlan, index: 
   }
 
   try {
-    return {
-      index,
-      report: plan.reportKind === 'junit' ? parseJunitReport(fileText) : parseJsonReport(fileText, plan.framework),
-      durationMs,
-      exitCode: result.exitCode,
-      stderr: result.stderr,
-    }
+    return completed(plan.reportKind === 'junit' ? parseJunitReport(fileText) : parseJsonReport(fileText, plan.framework))
   } catch (error) {
     return {
       index,

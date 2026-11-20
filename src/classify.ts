@@ -106,9 +106,10 @@ export function aggregate(runs: Array<{ index: number; report: NormalizedRun | n
 
   let verdict: RunVerdict
   const passRuns = records.filter(run => run.success).length
-  if (tests.length === 0) {
+  const executionFailed = runs.some(run => run.error !== undefined)
+  if (tests.length === 0 && !executionFailed) {
     verdict = 'empty'
-  } else if (tests.every(test => test.verdict === 'skipped')) {
+  } else if (tests.every(test => test.verdict === 'skipped') && !executionFailed) {
     verdict = 'skipped'
   } else if (passRuns === records.length) {
     verdict = 'stable-pass'
@@ -118,15 +119,15 @@ export function aggregate(runs: Array<{ index: number; report: NormalizedRun | n
     verdict = 'flaky'
   }
 
-  // 运行级 flaky 但无具体 flaky 用例：通常是某次运行崩溃（report=null）未产出报告。
+  // 运行级 flaky 但无具体 flaky 用例：可能是无报告或报告完成后进程异常退出。
   // 补一条合成记录，避免 flaky 信号丢失（历史写入 verdict=flaky 但 flakyCount=0）。
   if (verdict === 'flaky' && flakyCount === 0) {
-    const crashRuns = runs.filter(run => run.report === null).length
+    const crashRuns = runs.filter(run => run.report === null || run.error !== undefined).length
     if (crashRuns > 0) {
       tests.push({
         id: '(crash)',
         file: '(crash)',
-        name: '运行崩溃（未产出报告）',
+        name: '运行异常（进程失败或未产出报告）',
         passes: 0,
         failures: crashRuns,
         skips: 0,
