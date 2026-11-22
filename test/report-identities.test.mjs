@@ -12,10 +12,13 @@ test('JUnit mixed empty and paired testcase nodes preserve each result identity 
   ])
 })
 
-test('TAP counts only top-level cases and treats TODO as skipped', () => {
+test('TAP emits only leaf cases without double-counting parents, treats TODO as skipped, and keeps IDs order-independent', () => {
   const report = parseTapReport('TAP version 13\n# Subtest: parent\n    ok 1 - child\n    1..1\nok 1 - parent\nnot ok 2 - unfinished # TODO\n1..2\n')
   assert.deepEqual(report.tests.map(({ name, status }) => ({ name, status })), [
-    { name: 'parent', status: 'passed' }, { name: 'unfinished', status: 'skipped' },
+    { name: 'parent > child', status: 'passed' },
+    { name: 'unfinished', status: 'skipped' },
   ])
+  assert.equal(report.total, 2)
   assert.equal(report.success, true)
+  assert.ok(report.tests.every(item => !item.id.startsWith('node:')), 'IDs must not include sequential node:<index> counters')
 })

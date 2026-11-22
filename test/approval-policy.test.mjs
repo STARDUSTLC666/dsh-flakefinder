@@ -11,11 +11,13 @@ function host(policy, writeApproval = true) {
 }
 test('Flakefinder 隔离与清除在 never 下明确拒绝，保留下游拒绝', async () => {
   for (const name of ['flaky_quarantine', 'flaky_clear']) {
-    const gate = host('never'), exec = { name, arguments: { tests: ['owned.spec.ts'] } }
+    const gate = host('never'), exec = { name, arguments: { tests: ['owned.spec.ts'], reason: 'race' } }
     const result = await gate(exec, async () => ({ kind: 'allow' }))
     assert.equal(result.kind, 'deny'); assert.match(result.reason, /never.*writeApproval=false/s)
     const denied = { kind: 'deny', reason: 'Host denied' }; assert.equal(await gate(exec, async () => denied), denied)
-    assert.equal((await host('ask')(exec, async () => ({ kind: 'allow' }))).kind, 'ask')
+    const askRes = await host('ask')(exec, async () => ({ kind: 'allow' }))
+    assert.equal(askRes.kind, 'ask')
+    assert.match(askRes.reason, /owned\.spec\.ts/)
   }
 })
 test('Flakefinder 未知策略保守拒绝；关闭审批及只读工具不增加确认', async () => {

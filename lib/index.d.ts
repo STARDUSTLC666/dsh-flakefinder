@@ -1,9 +1,10 @@
 /**
  * dsh-flakefinder —— 测试稳定性工具插件（node 半身，配置走 cordis.patch.yml）。
  *
- * 插件导出 apply(ctx, config)：注册五个面向模型的工具（flaky_detect / flaky_history /
- * flaky_quarantine / flaky_clear / flaky_report）。测试进程走 DSH 官方 subprocess 服务
- * （argv 数组、无 shell），隔离清单写操作默认走宿主审批门。仅依赖文件锁库。
+ * 插件导出 apply(ctx, config)：注册六个面向模型的工具（flaky_detect / flaky_history /
+ * flaky_quarantine / flaky_clear / flaky_report / flaky_health）。测试进程走 DSH 官方
+ * subprocess 服务（argv 数组、无 shell），隔离清单写操作默认走宿主审批门。
+ * 运行时依赖 proper-lockfile 与 @stardustlc/dsh-updates。
  *
  * @module dsh-flakefinder
  */
@@ -31,9 +32,10 @@ export interface FlakePluginContext extends ApprovalContext {
     }): (() => void) | void;
 }
 /**
- * 插件入口：解析配置、封装执行器与存储、注册五个工具。
+ * 插件入口：解析配置、封装执行器与存储、注册六个工具。
  */
 export declare function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): void;
+export * from './adapters.js';
 export * from './args.js';
 export * from './classify.js';
 export * from './config.js';

@@ -19,9 +19,10 @@ Flaky test investigation plugin for DeepSeek Harness (`>=0.2.2-rc.3`): runs Vite
 
 ## Features
 
-- Investigate Vitest, Jest, pytest and node:test runs.
-- Keep each run’s outcome and failure history.
-- Narrow the cause using differences and maintain quarantine lists.
+- Investigate Vitest, Jest, pytest, and `node:test` runs with monorepo upward framework resolution and automatic workspace `.venv` detection.
+- Support targeted filtering (`testName`), early-stop modes (`until-flaky` / `verify-fix`), bounded concurrency (1–4 workers), and shuffled order with reproducible seeds (`shuffle` / `seed`).
+- Cluster deduplicated errors with redacted stacks, render per-run timelines, infer root-cause patterns (cold-start, state-leak, timeout-race, order-dependent, teardown-crash), and report 95% confidence bounds.
+- Keep workspace-isolated detection history, cross-check `.flakefinder.json` quarantine lists, surface top flaky hotspots and stale quarantine reminders, and list exact affected tests in approval prompts.
 
 ## Install
 

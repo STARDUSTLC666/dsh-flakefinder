@@ -19,9 +19,10 @@ DeepSeek Harness（`>=0.2.2-rc.3`）偶发测试排查插件：面向 Vitest、J
 
 ## 功能
 
-- 支持 Vitest、Jest、pytest 与 node:test 调查。
-- 保留每轮结果与失败历史。
-- 依据差异继续定位，并管理隔离清单。
+- 支持 Vitest、Jest、pytest 与 `node:test` 复跑调查（支持 monorepo 向上查找框架与工作区 `.venv` 自动探测）。
+- 支持用例名过滤（`testName`）、早停模式（`until-flaky` / `verify-fix`）、受控并发（1–4 路）与随机顺序打乱（`shuffle` / `seed`）。
+- 自动聚合错误聚类、提取脱敏堆栈、输出通过/失败时间线与根因模式（冷启动、状态泄漏、超时竞态、顺序依赖、清理阶段崩溃）及 95% 置信度提示。
+- 按工作区隔离检测历史，交叉对照 `.flakefinder.json` 隔离清单，输出高频不稳定 Top 榜单与超期未复查提醒，并在审批弹窗中展示完整待隔离/移除条目。
 
 ## 安装
 

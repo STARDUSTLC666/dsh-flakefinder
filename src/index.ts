@@ -2,9 +2,10 @@ import { registerUpdates } from '@stardustlc/dsh-updates'
 /**
  * dsh-flakefinder —— 测试稳定性工具插件（node 半身，配置走 cordis.patch.yml）。
  *
- * 插件导出 apply(ctx, config)：注册五个面向模型的工具（flaky_detect / flaky_history /
- * flaky_quarantine / flaky_clear / flaky_report）。测试进程走 DSH 官方 subprocess 服务
- * （argv 数组、无 shell），隔离清单写操作默认走宿主审批门。仅依赖文件锁库。
+ * 插件导出 apply(ctx, config)：注册六个面向模型的工具（flaky_detect / flaky_history /
+ * flaky_quarantine / flaky_clear / flaky_report / flaky_health）。测试进程走 DSH 官方
+ * subprocess 服务（argv 数组、无 shell），隔离清单写操作默认走宿主审批门。
+ * 运行时依赖 proper-lockfile 与 @stardustlc/dsh-updates。
  *
  * @module dsh-flakefinder
  */
@@ -28,8 +29,49 @@ export interface FlakePluginContext extends ApprovalContext {
   on?(event: string, listener: (...args: any[]) => unknown, options?: { prepend?: boolean }): (() => void) | void
 }
 
+function parsePreExecuteArgs(rawArgs: unknown): Record<string, unknown> {
+  if (typeof rawArgs === 'object' && rawArgs !== null) return rawArgs as Record<string, unknown>
+  if (typeof rawArgs === 'string' && rawArgs.trim() !== '') {
+    try {
+      const parsed = JSON.parse(rawArgs)
+      if (typeof parsed === 'object' && parsed !== null) return parsed as Record<string, unknown>
+    } catch {
+      // 参数不是合法 JSON 时退回默认审批说明。
+    }
+  }
+  return {}
+}
+
+function formatApprovalReason(toolName: 'flaky_quarantine' | 'flaky_clear', rawArgs: unknown): string {
+  const args = parsePreExecuteArgs(rawArgs)
+  const tests = Array.isArray(args.tests)
+    ? args.tests.filter((item): item is string => typeof item === 'string' && item.trim() !== '').map(item => item.trim())
+    : []
+
+  if (tests.length === 0) {
+    return toolName === 'flaky_quarantine'
+      ? '把测试用例写入 .flakefinder.json 隔离清单'
+      : '从 .flakefinder.json 隔离清单移除测试用例'
+  }
+
+  const list = tests.map(item => '  - ' + item).join('\n')
+  if (toolName === 'flaky_quarantine') {
+    const meta: string[] = []
+    if (typeof args.reason === 'string' && args.reason.trim() !== '') {
+      meta.push('原因：' + args.reason.trim())
+    }
+    if (typeof args.issue === 'string' && args.issue.trim() !== '') {
+      meta.push('关联：' + args.issue.trim())
+    }
+    const suffix = meta.length > 0 ? '\n' + meta.join('；') : ''
+    return '把以下 ' + String(tests.length) + ' 条测试用例写入 .flakefinder.json 隔离清单：\n' + list + suffix
+  }
+
+  return '从 .flakefinder.json 隔离清单移除以下 ' + String(tests.length) + ' 条测试用例：\n' + list
+}
+
 /**
- * 插件入口：解析配置、封装执行器与存储、注册五个工具。
+ * 插件入口：解析配置、封装执行器与存储、注册六个工具。
  */
 export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): void {
   registerUpdates(ctx, { name: "dsh-flakefinder" })
@@ -55,15 +97,13 @@ export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): voi
     disposers.push(ctx.tools.register(definition))
   }
   if (typeof ctx.on === 'function' && cfg.writeApproval) {
-    ctx.on('tools/pre-execute', async (exec: { name?: unknown }, next: () => Promise<unknown>) => {
+    ctx.on('tools/pre-execute', async (exec: { name?: unknown; arguments?: unknown }, next: () => Promise<unknown>) => {
       if (exec.name !== 'flaky_quarantine' && exec.name !== 'flaky_clear') return next()
       const downstream = await next()
       if ((downstream as { kind?: unknown })?.kind === 'deny') return downstream
       const problem = approvalProblem(approvalPolicy(ctx, exec), 'writeApproval')
       if (problem) return { kind: 'deny', reason: problem }
-      if (exec.name === 'flaky_quarantine') return { kind: 'ask', reason: '把测试用例写入 .flakefinder.json 隔离清单' }
-      if (exec.name === 'flaky_clear') return { kind: 'ask', reason: '从 .flakefinder.json 隔离清单移除测试用例' }
-      return next()
+      return { kind: 'ask', reason: formatApprovalReason(exec.name, exec.arguments) }
     }, { prepend: true })
   }
   const teardown = () => {
@@ -76,6 +116,7 @@ export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): voi
   }
 }
 
+export * from './adapters.js'
 export * from './args.js'
 export * from './classify.js'
 export * from './config.js'

@@ -17,15 +17,19 @@ test('files 白名单包含 lib 与 patch', () => {
   assert.ok(pkg.files.includes('cordis.patch.yml'))
 })
 
-test('cordis.patch.yml 插入 flakefinder 行', () => {
+test('cordis.patch.yml 插入 flakefinder 行并记录新配置注释', () => {
   const text = fs.readFileSync(path.join(root, 'cordis.patch.yml'), 'utf8')
   assert.match(text, /name: 'dsh-flakefinder'/)
   assert.match(text, /writeApproval/)
+  assert.match(text, /defaultConcurrency/)
+  assert.match(text, /noCoverage/)
+  assert.match(text, /staleQuarantineDays/)
 })
 
-test('lib 已构建且导出六个工具入口', async () => {
+test('lib 已构建且导出六个工具入口与 adapters', async () => {
   assert.ok(fs.existsSync(path.join(root, 'lib/index.js')))
   assert.ok(fs.existsSync(path.join(root, 'lib/tools.js')))
+  assert.ok(fs.existsSync(path.join(root, 'lib/adapters.js')))
   assert.equal(pkg.dsh.manifestVersion, 1)
   assert.equal(pkg.exports['./locale/*.json'], './locale/*.json')
   assert.ok(fs.existsSync(path.join(root, 'locale/zh.json')))

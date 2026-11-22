@@ -6,8 +6,9 @@ import path from 'node:path'
 import { buildPlan, readFramework } from '../lib/args.js'
 import { parseJunitReport } from '../lib/parse.js'
 
-test('readFramework 支持 pytest', () => {
+test('readFramework 支持 pytest 与别名 py', () => {
   assert.equal(readFramework('pytest'), 'pytest')
+  assert.equal(readFramework('py'), 'pytest')
   assert.throws(() => readFramework('rspec'), /framework/)
 })
 
@@ -37,7 +38,7 @@ test('parseJunitReport 解码 XML 实体', () => {
   assert.equal(run.tests[0].name, 'test_ok & fine')
 })
 
-test('parseJunitReport 解析通过/失败/跳过', () => {
+test('parseJunitReport 解析通过/失败/跳过并提取失败详情', () => {
   const xml = '<?xml version="1.0"?><testsuite name="pytest" errors="0" failures="1" skipped="1" tests="3"><testcase classname="tests.test_x" name="test_ok" time="0.1"/><testcase classname="tests.test_x" name="test_bad" time="0.2"><failure message="boom"/></testcase><testcase classname="tests.test_x" name="test_skip" time="0"><skipped type="pytest.skip" message="skip"/></testcase></testsuite>'
   const run = parseJunitReport(xml)
   assert.equal(run.framework, 'pytest')
@@ -46,4 +47,5 @@ test('parseJunitReport 解析通过/失败/跳过', () => {
   assert.equal(run.failed, 1)
   assert.equal(run.skipped, 1)
   assert.equal(run.success, false)
+  assert.equal(run.tests[1].error?.message, 'boom')
 })

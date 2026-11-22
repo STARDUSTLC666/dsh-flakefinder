@@ -1,6 +1,6 @@
 {
   "name": "dsh-flakefinder",
-  "version": "0.4.23",
+  "version": "0.5.0",
   "description": "DeepSeek Harness 偶发测试排查插件：多轮复跑、失败率统计、差异追踪与工作区隔离清单。欢迎提交 issues 和 PR。",
   "type": "module",
   "main": "lib/index.js",

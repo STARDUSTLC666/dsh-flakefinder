@@ -16,9 +16,10 @@
 
 ## 功能
 
-- 支持 Vitest、Jest、pytest 和 node:test。
-- 记录重复运行结果与失败历史。
-- 生成和维护用例隔离清单。
+- 支持 Vitest、Jest、pytest 与 `node:test`（含 monorepo 向上查找依赖、`node:test` 层级 TAP 13 诊断解析与工作区 `.venv` 自动探测）。
+- 支持精准用例过滤（`testName`）、`until-flaky` / `verify-fix` 早停、受控并发（1–4 路）、默认跳过覆盖率与 `shuffle` / `seed` 顺序打乱。
+- 输出去重错误聚类（带密钥脱敏堆栈）、时间线、耗时分布、根因模式标签、95% 置信度提示与隔离清单交叉对照。
+- 按工作区隔离历史记录，汇总高频不稳定 Top 榜单与超期未复查隔离项，并提供工作区感知的 `flaky_health` 自检。
 
 ## 安装
 

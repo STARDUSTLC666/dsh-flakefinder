@@ -55,3 +55,40 @@ test('process failures are not hidden by empty/skipped reports, and assertion fa
   assert.equal(run.report.failed, 1)
   assert.equal(run.error, undefined, 'expected assertion failure is not a separate crash')
 })
+
+test('truncated TAP output cannot masquerade as stable-pass', async () => {
+  const plan = { framework: 'node', reportKind: 'tap', reportPath: '', argv: ['fake'], label: 'fixture', target: 'big.test.mjs' }
+  const runner = {
+    async run() {
+      return { exitCode: 0, signal: null, stdout: 'TAP version 13\nok 1 - works\n1..1\n', stderr: '', truncated: true }
+    },
+  }
+  const run = await executePlan(runner, plan, 1, 5000)
+  assert.equal(run.truncated, true)
+  assert.equal(run.report.success, false)
+  assert.match(run.error ?? '', /截断/)
+  const result = aggregate([run])
+  assert.equal(result.verdict, 'stable-fail')
+})
+
+test('valid file-based JSON/JUnit reports remain stable-pass even when stdout/stderr exceeded 4MB', async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), 'flake-file-trunc-'))
+  t.after(() => rm(dir, { recursive: true, force: true }))
+  for (const [reportKind, body] of [
+    ['json', JSON.stringify({ success: true, testResults: [{ name: 'a.test.ts', assertionResults: [{ title: 'works', status: 'passed' }] }] })],
+    ['junit', '<testsuite><testcase classname="a" name="works"/></testsuite>'],
+  ]) {
+    const reportPath = join(dir, 'ok.' + reportKind)
+    const plan = { framework: reportKind === 'json' ? 'vitest' : 'pytest', reportKind, reportPath, argv: ['fake'], label: 'fixture' }
+    const runner = {
+      async run() {
+        await writeFile(reportPath, body)
+        return { exitCode: 0, signal: null, stdout: 'noisy logs...', stderr: '', truncated: true }
+      },
+    }
+    const run = await executePlan(runner, plan, 1, 5000, dir)
+    assert.equal(run.truncated, undefined)
+    assert.equal(run.report.success, true)
+    assert.equal(aggregate([run]).verdict, 'stable-pass')
+  }
+})

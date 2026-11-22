@@ -16,9 +16,10 @@ Feedback and contributions are welcome: report [issues](https://github.com/STARD
 
 ## What it does
 
-- Support Vitest, Jest, pytest and node:test.
-- Track repeated run results and failure history.
-- Generate and maintain a quarantine list.
+- Support Vitest, Jest, pytest, and `node:test` (including monorepo upward module lookup, hierarchical TAP 13 diagnostics, and automatic workspace `.venv` discovery).
+- Support targeted filtering (`testName`), `until-flaky` / `verify-fix` early stopping, bounded concurrency (1–4), coverage disabled by default, and `shuffle` / `seed` order randomization.
+- Provide deduplicated error clusters with secret-redacted stacks, per-run timelines, duration stats, root-cause pattern hints, 95% confidence bounds, and quarantine cross-annotation.
+- Isolate detection history per workspace, summarize top flaky hotspots and stale quarantine items, and run workspace-aware `flaky_health` diagnostics.
 
 ## Install
 

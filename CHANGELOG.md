@@ -1,5 +1,14 @@
 # 更新记录
 
+## 0.5.0 (2026-11-22)
+
+- 核心正确性修复：修复混合 `stable-fail` + `flaky`（`passRuns=0`）误判稳定失败及合成 `(crash)`/`(timeout)` 失败率；单轮超时不再中断整批检测并区分宿主取消信号；新增 `lossy` 输出截断检测；升级层级 TAP 13 解析器（叶子用例去重、去除顺序号防并发串位、提取 YAML 耗时与堆栈）与 JUnit XML 严格校验；支持 Monorepo 向上查找 `node_modules`、工作区 `.venv`/`venv` 自动探测与 Windows 路径规范化。
+- 诊断与执行力升级：新增报错指纹聚类与脱敏精简堆栈、每用例单轮时间线（`✓/✗/⏱/S/-`）、通过/失败耗时对比、6 类根因模式画像与 95% 置信度提示；`flaky_detect` 新增 `testName` 过滤、`mode`（`full` / `until-flaky` / `verify-fix`）早停、`concurrency`（1–4）、`shuffle`/`seed` 随机顺序复现与 `noCoverage` 默认跳过覆盖率；抽离 `FrameworkAdapter` 注册表架构。
+- 工作区隔离与闭环联动：检测历史按工作区独立存储（保留 `scope=all` 兼容旧记录）；修复 `.flakefinder.json` 隔离写入匹配缺陷并保留首次 `since`、新增可选 `updatedAt`/`issue`/`lastFailureRate` 与相对 POSIX 路径归一化；`flaky_detect` 自动标注 `[新增未隔离]`/`[已隔离]`/可消单候选，`flaky_report` 新增高频不稳定 Top N 榜单与超期未复查提醒；丰富审批弹窗内容，升级 `flaky_health` 为工作区感知自检。
+- Core correctness & reliability fixes: ensure test-level `flakyCount > 0` always yields top-level `flaky` verdict; record per-run timeouts gracefully without aborting remaining runs (preserving host abort cancellation); detect `lossy` output truncation; upgrade to a hierarchical TAP 13 + YAML diagnostics parser with deterministic order-independent leaf IDs and strict JUnit XML validation; add upward monorepo `node_modules` and workspace `.venv`/`venv` discovery plus Windows path normalization.
+- Diagnostics & execution controls: add secret-redacted error fingerprinting with compact representative stacks, per-test timelines, pass-vs-fail duration stats, 6 root-cause pattern heuristics, and 95% confidence upper bounds; extend `flaky_detect` with `testName`, `mode` (`full` / `until-flaky` / `verify-fix`), `concurrency` (1–4), `shuffle`/`seed`, and `noCoverage` (default `true`); extract the `FrameworkAdapter` registry.
+- Workspace isolation & quarantine feedback loop: isolate history per workspace (with `scope=all` legacy compatibility); fix quarantine add/update matching while preserving original `since` and enforcing relative POSIX paths; cross-annotate `flaky_detect` with new/quarantined/clear-candidate items; add Top-N hotspots and stale-quarantine warnings in `flaky_report`; enrich approval prompts and make `flaky_health` workspace-aware.
+
 ## 0.4.23 (2026-11-20)
 
 - 升级共享更新组件至 0.2.10，移除跨插件右下角浮动提醒，保留工作台及插件详情页更新控制。
