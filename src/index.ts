@@ -97,7 +97,7 @@ export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): voi
     disposers.push(ctx.tools.register(definition))
   }
   if (typeof ctx.on === 'function' && cfg.writeApproval) {
-    ctx.on('tools/pre-execute', async (exec: { name?: unknown; arguments?: unknown }, next: () => Promise<unknown>) => {
+    const disposePreExecute = ctx.on('tools/pre-execute', async (exec: { name?: unknown; arguments?: unknown }, next: () => Promise<unknown>) => {
       if (exec.name !== 'flaky_quarantine' && exec.name !== 'flaky_clear') return next()
       const downstream = await next()
       if ((downstream as { kind?: unknown })?.kind === 'deny') return downstream
@@ -105,6 +105,7 @@ export function apply(ctx: FlakePluginContext, config?: FlakeConfig | null): voi
       if (problem) return { kind: 'deny', reason: problem }
       return { kind: 'ask', reason: formatApprovalReason(exec.name, exec.arguments) }
     }, { prepend: true })
+    if (typeof disposePreExecute === 'function') disposers.push(disposePreExecute)
   }
   const teardown = () => {
     for (const dispose of disposers) dispose()

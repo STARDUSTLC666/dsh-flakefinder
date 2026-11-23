@@ -11,6 +11,7 @@
 #       noCoverage: true          # 默认关闭覆盖率采集以加速复跑（Vitest/Jest 生效）
 #       staleQuarantineDays: 14   # 隔离清单条目超期未复查提醒天数（1-365）
 #       timeoutMs: 120000         # 单次测试运行超时（毫秒）
+#       graceMs: 10000            # 超时或取消后等待测试进程优雅退出的宽限时间（毫秒，1 秒 - 2 分钟）
 #       writeApproval: true       # quarantine/clear 是否走审批门（默认 true）
 #       dataDir: ''               # 历史存储目录（默认 DSH_HOME/.dsh-flakefinder）
 #       quarantineFile: ''        # 隔离清单（默认工作区根 .flakefinder.json）

@@ -23,7 +23,7 @@ Flaky test investigation plugin for DeepSeek Harness (`>=0.2.2-rc.3`) supporting
 | :--- | :--- |
 | **Multi-Runner Support** | Supports Vitest, Jest, pytest, and `node:test` with upward monorepo resolution and automatic workspace `.venv` detection |
 | **Resilient Run Controls** | Targeted `testName` filters, early-stop modes (`until-flaky` / `verify-fix`), 1–4 worker concurrency & reproducible order shuffling (`shuffle`/`seed`) |
-| **Root-Cause Diagnostics** | Deduplicates redacted stack traces, renders pass/fail timelines, infers 6 root-cause patterns (cold-start, state-leak, timeout-race, order-dependent, teardown-crash) & reports 95% confidence bounds |
+| **Root-Cause Diagnostics** | Deduplicates redacted stack traces, renders pass/fail timelines, infers 6 root-cause patterns (cold-start, state-leak, timeout-race, order-dependent, teardown-crash, intermittent) & reports 95% confidence bounds |
 | **Workspace Quarantine** | Keeps per-workspace history, cross-checks `.flakefinder.json` quarantine lists, surfaces Top-N hotspots & stale reminders, and gates writes behind explicit approval prompts |
 
 ## Install

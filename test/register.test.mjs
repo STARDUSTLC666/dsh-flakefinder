@@ -106,3 +106,32 @@ test('配置非法时退回默认配置并告警', () => {
   apply(ctx, { timeoutMs: -1 })
   assert.equal(names.length, 6)
 })
+
+test('writeApproval 开启时 dispose 与 ctx.effect 均释放 tools/pre-execute 监听器', () => {
+  for (const useEffect of [false, true]) {
+    const disposed = []
+    let preExecuteDisposed = 0
+    const listeners = new Map()
+    const cleanups = []
+    const ctx = {
+      subprocess: { spawn: async () => ({}) },
+      tools: { register(definition) { return () => { disposed.push(definition.name) } } },
+      get() { return undefined },
+      on(event, listener) {
+        listeners.set(event, listener)
+        if (event === 'tools/pre-execute') return () => { preExecuteDisposed += 1 }
+        return () => {}
+      },
+      ...(useEffect ? { effect(fn) { cleanups.push(fn()) } } : {}),
+    }
+    apply(ctx, { writeApproval: true })
+    assert.equal(preExecuteDisposed, 0)
+    if (useEffect) {
+      for (const cleanup of cleanups) cleanup?.()
+    } else {
+      listeners.get('dispose')()
+    }
+    assert.equal(disposed.length, 6)
+    assert.equal(preExecuteDisposed, 1)
+  }
+})

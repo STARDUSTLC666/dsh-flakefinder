@@ -1,5 +1,11 @@
 # 更新记录
 
+## 0.5.1 (2026-11-23)
+
+- 将 `tools/pre-execute` 审批监听器纳入插件卸载清理（`disposers`），确保 `dispose` 与 `ctx.effect` 卸载释放，并补充单元测试。
+- 在 `README.en.md` 补齐缺失的第 6 类根因模式 `intermittent`，在 `cordis.patch.yml` 补充 `graceMs` 注释，并修正 `docs/REFERENCE.{zh,en}.md` 语言切换链接与更新说明。
+- Track the `tools/pre-execute` listener disposer in `disposers` for clean `dispose`/`ctx.effect` teardown (with unit tests); list the missing `intermittent` root-cause pattern in `README.en.md`, document `graceMs` in `cordis.patch.yml`, and align `docs/REFERENCE.{zh,en}.md` links and update policy wording.
+
 ## 0.5.0 (2026-11-22)
 
 - 核心正确性修复：修复混合 `stable-fail` + `flaky`（`passRuns=0`）误判稳定失败及合成 `(crash)`/`(timeout)` 失败率；单轮超时不再中断整批检测并区分宿主取消信号；新增 `lossy` 输出截断检测；升级层级 TAP 13 解析器（叶子用例去重、去除顺序号防并发串位、提取 YAML 耗时与堆栈）与 JUnit XML 严格校验；支持 Monorepo 向上查找 `node_modules`、工作区 `.venv`/`venv` 自动探测与 Windows 路径规范化。
