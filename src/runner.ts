@@ -58,6 +58,51 @@ export function isTimeoutError(error: unknown): error is FlakeTimeoutError {
 }
 
 const COLLECT_BYTES = 4 * 1024 * 1024
+const MAX_REPORT_BYTES = 8 * 1024 * 1024
+
+interface BoundedReport {
+  text: string
+  error?: string
+}
+
+/** Read a reporter file without trusting its type or allocating an unbounded buffer. */
+async function readBoundedReport(reportPath: string): Promise<BoundedReport> {
+  let handle: Awaited<ReturnType<typeof fs.open>> | undefined
+  try {
+    const linkInfo = await fs.lstat(reportPath)
+    if (!linkInfo.isFile() || linkInfo.isSymbolicLink()) {
+      return { text: '', error: '报告路径不是普通文件，已拒绝读取。' }
+    }
+
+    handle = await fs.open(reportPath, 'r')
+    const info = await handle.stat()
+    if (!info.isFile()) return { text: '', error: '报告路径不是普通文件，已拒绝读取。' }
+    if (info.dev !== linkInfo.dev || info.ino !== linkInfo.ino) {
+      return { text: '', error: '报告文件在校验期间发生变化，已拒绝读取。' }
+    }
+    if (info.size > MAX_REPORT_BYTES) {
+      return { text: '', error: '报告文件超过 8 MiB 大小上限，结果不完整，已拒绝解析。' }
+    }
+
+    const chunks: Buffer[] = []
+    let total = 0
+    for (;;) {
+      const chunk = Buffer.allocUnsafe(Math.min(64 * 1024, MAX_REPORT_BYTES + 1 - total))
+      const { bytesRead } = await handle.read(chunk, 0, chunk.length, null)
+      if (bytesRead === 0) break
+      total += bytesRead
+      if (total > MAX_REPORT_BYTES) {
+        return { text: '', error: '报告文件超过 8 MiB 大小上限，结果不完整，已拒绝解析。' }
+      }
+      chunks.push(bytesRead === chunk.length ? chunk : chunk.subarray(0, bytesRead))
+    }
+    return { text: Buffer.concat(chunks, total).toString('utf8') }
+  } catch (error) {
+    return { text: '', error: error instanceof Error ? error.message : String(error) }
+  } finally {
+    await handle?.close().catch(() => {})
+  }
+}
 
 /** 用 DSH subprocess 服务构造 ProcessRunner。 */
 export function createSubprocessRunner(spawn: SubprocessSpawnLike, graceMs: number, defaultTimeoutMs: number): ProcessRunner {
@@ -233,7 +278,9 @@ export async function executePlan(
   let fileText = ''
   let fileError = ''
   try {
-    fileText = await fs.readFile(plan.reportPath, 'utf8')
+    const bounded = await readBoundedReport(plan.reportPath)
+    fileText = bounded.text
+    fileError = bounded.error ?? ''
   } catch (error) {
     fileError = error instanceof Error ? error.message : String(error)
   } finally {
@@ -250,7 +297,7 @@ export async function executePlan(
       stderr: result.stderr,
       ...truncatedField,
       ...seedField,
-      error: plan.framework + ' 没有写出报告文件' + truncNote + '（' + fileError + '）。进程退出码：' + String(result.exitCode ?? 'null') + '；stderr：' + stderrTail(result.stderr),
+      error: plan.framework + ' 测试报告不可用，结果不完整，本轮判定失败：' + (fileError || '报告文件为空') + truncNote + '。进程退出码：' + String(result.exitCode ?? 'null') + '；stderr：' + stderrTail(result.stderr),
     }
   }
 

@@ -131,6 +131,32 @@ test('executePlan 捕获单轮超时为结构化记录、清理临时文件，�
   await assert.rejects(fs.access(reportPath), { code: 'ENOENT' })
 })
 
+test('executePlan 拒绝超过 8 MiB 的报告并清理稀疏临时文件', async (t) => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'flake-report-limit-'))
+  t.after(() => fs.rm(dir, { recursive: true, force: true }))
+  const reportPath = path.join(dir, 'oversized-report.json')
+  await fs.writeFile(reportPath, '{}', 'utf8')
+  await fs.truncate(reportPath, 8 * 1024 * 1024 + 1)
+
+  const plan = {
+    framework: 'vitest',
+    reportKind: 'json',
+    reportPath,
+    argv: ['fake'],
+    label: 'fixture',
+    target: 'fixture.test.mjs',
+  }
+  const run = await executePlan({
+    async run() {
+      return { exitCode: 0, signal: null, stdout: '', stderr: '' }
+    },
+  }, plan, 1, 5000, dir)
+
+  assert.equal(run.report, null)
+  assert.match(run.error ?? '', /超过 8 MiB/)
+  await assert.rejects(fs.access(reportPath), { code: 'ENOENT' }, '超限报告必须清理')
+})
+
 test('executePlansBatch 并发池按 index 有序输出且限制最大并发', async () => {
   const plans = Array.from({ length: 5 }, (_, i) => ({
     framework: 'node',
