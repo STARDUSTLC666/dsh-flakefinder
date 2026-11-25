@@ -1,5 +1,11 @@
 # 更新记录
 
+## 0.5.2 (2026-11-25)
+
+- 测试报告增加 8 MiB 大小上限和分块读取边界，拒绝链接、非普通文件与校验期间更换的文件；超限或不可用报告明确判定本轮失败并清理临时文件。
+- 验证：完整构建与 131 项测试通过，新增超限稀疏报告拒绝及清理回归用例。
+- Bound reporter files to 8 MiB, verify ordinary-file identity, and reject incomplete reports with cleanup; pass all 131 tests.
+
 ## 0.5.1 (2026-11-23)
 
 - 将 `tools/pre-execute` 审批监听器纳入插件卸载清理（`disposers`），确保 `dispose` 与 `ctx.effect` 卸载释放，并补充单元测试。
