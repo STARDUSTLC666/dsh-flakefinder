@@ -1,5 +1,10 @@
 # 更新记录
 
+## 0.5.3 (2026-11-28)
+
+- 更新详情页现在会保留较新检查的结果，慢轮询返回时不再把版本或任务状态退回旧值。
+- Keep newer update-check results and job status when an older background request finishes later.
+
 ## 0.5.2 (2026-11-25)
 
 - 测试报告增加 8 MiB 大小上限和分块读取边界，拒绝链接、非普通文件与校验期间更换的文件；超限或不可用报告明确判定本轮失败并清理临时文件。
